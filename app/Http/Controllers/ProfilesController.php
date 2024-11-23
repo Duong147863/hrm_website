@@ -211,7 +211,7 @@ class ProfilesController extends Controller
             "nation" => "required|string",
             "place_of_birth" => "required|string",
             "role_id" => "required|integer",
-            "profile_image" => "required|string",
+            "profile_image" => "nullable|string",
             //foriegn key
             "department_id" => "nullable|string",
             "position_id" => "nullable|string",
@@ -332,7 +332,7 @@ class ProfilesController extends Controller
             return response()->json(['message' => 'Profile not found'], 404);
         }
 
-        $profile->profile_status = 0;
+        $profile->profile_status = -1;
         $profile->save();
 
         return response()->json(['message' => 'Profile deactivated successfully'], 200);

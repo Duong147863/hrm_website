@@ -67,7 +67,7 @@ class Profiles extends Authenticatable
         "department_id" => "string",
         "position_id" => "string",
         "salary_id" => "string",
-        "labor_contract_id" => "string",
+        // "labor_contract_id" => "string",
     ];
 
     public function roles()

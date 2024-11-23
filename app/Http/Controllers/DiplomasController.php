@@ -18,22 +18,19 @@ class DiplomasController extends Controller
         return response()->json($diploma);
     }
 
-    // public function getDiplomaOfProfile(string $profile_id)
-    // {
-    //     return
-    //         DB::table('diplomas')
-    //         ->join('profiles', 'diplomas.profile_id', '=', 'profiles.profile_id')
-    //         ->select(
-    //             'profiles.profile_name',
-    //             'diplomas.*'
-    //         )
-    //         ->where([['profiles.profile_id', '=', $profile_id]],)
-    //         ->get()
-    //     ;
-    // }
     public function getDiplomaOfProfile(string $profile_id)
     {
-        return Diplomas::where('profile_id', $profile_id)->get();
+        $diplomas = Diplomas::where('profile_id', $profile_id)
+            ->with('profile') // Load quan hệ với profile
+            ->get();
+    
+        $result = $diplomas->map(function ($diploma) {
+            return [
+                'profile_name' => $diploma->profile->profile_name, // Lấy tên profile
+            ];
+        });
+    
+        return response()->json($result);
     }
     public function createNewDiploma(Request $request)
     {
