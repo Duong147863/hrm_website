@@ -49,10 +49,11 @@ class ProfilesController extends Controller
     public function MembersCount() // SL nhân viên đã nghỉ việc và đang làm việc
     {
         // Lấy tất cả nhân viên đã nghỉ việc (profile_status = 0)
-        $quitProfiles = Profiles::where('profile_status', 0)->get();
+        $quitProfiles = Profiles::where('profile_status', "=",-1)
+        ->get();
 
         // Lấy tất cả nhân viên đang làm việc (profile_status = 1)
-        $activeProfiles = Profiles::where('profile_status', 1)->get();
+        $activeProfiles = Profiles::where('profile_status', "!=",-1)->get();
 
         $officialContractsCount = DB::table('profiles')
             ->join('labor_contract', 'profiles.labor_contract_id', '=', 'labor_contract.labor_contract_id')
@@ -130,7 +131,7 @@ class ProfilesController extends Controller
         ]);
 
         //Check email
-        $user = Profiles::where(["email" => $fields['email'], "profile_status" => 1])->first();
+        $user = Profiles::where("email" ,"=", $fields['email'])->where("profile_status", "!=", -1)->first();
 
         //Check password
         if (!$user || !Hash::check($fields['password'], $user->password)) {
@@ -165,7 +166,8 @@ class ProfilesController extends Controller
         ]);
 
         //Check phone
-        $user = Profiles::where(["phone" => $fields['phone'], "profile_status" => 1])->first();
+        $user = Profiles::where("phone" ,"=", $fields['phone'])->where("profile_status", "!=", -1)
+            ->first();
         //Check password
         if (!$user || !Hash::check($fields['password'], $user->password)) {
             return response([
