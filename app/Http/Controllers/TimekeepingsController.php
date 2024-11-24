@@ -29,22 +29,18 @@ class TimekeepingsController extends Controller
     }
     public function getTimeKeepingsList()
     {
-        return
-            DB::table('timekeepings')
+        return DB::table('timekeepings')
             ->join('profiles', 'timekeepings.profile_id', '=', 'profiles.profile_id')
             ->join('shifts', 'timekeepings.shift_id', '=', 'shifts.shift_id')
             ->select(
                 'timekeepings.*',
                 'profiles.profile_name',
                 'shifts.shift_name',
-            )
-            ->get()
-        ;
+            )->get();
     }
     public function getLateList(DateTime $start_date)
     {
-        return
-            DB::table('timekeepings')
+        return DB::table('timekeepings')
             ->join('profiles', 'timekeepings.profile_id', '=', 'profiles.profile_id')
             ->join('shifts', 'timekeepings.shift_id', '=', 'shifts.shift_id')
             ->select(
@@ -57,10 +53,10 @@ class TimekeepingsController extends Controller
     }
     public function checkIn(Request $request)
     {
-          // Kiểm tra xem đã check-in chưa
-          $timeKeepings = Timekeepings::where('profile_id', $request->profile_id)
-          ->whereDate('date', now()->toDateString())
-          ->first();
+        // Kiểm tra xem đã check-in chưa
+        $timeKeepings = Timekeepings::where('profile_id', $request->profile_id)
+        ->whereDate('date', now()->toDateString())
+        ->first();
         $input = $request->validate([
             'profile_id' => "required|string",
             'late' => "nullable|date_format:H:i:s",
@@ -70,7 +66,7 @@ class TimekeepingsController extends Controller
             'status' => 'required|integer'
         ]);
 
-        $timeKeepings = Timekeepings::create([
+       Timekeepings::create([
             'date'=> $input['date'],
             'status'=> $input['status'],
             'late'=> $input['late'],
@@ -84,7 +80,7 @@ class TimekeepingsController extends Controller
     {
         $checkOut = Timekeepings::find($request->timekeeping_id);
          // Kiểm tra xem đã check-in nhưng chưa check-out
-         $checkOut = Timekeepings::where('profile_id', $$request->profile_id)
+         $checkOut = Timekeepings::where('profile_id', $request->profile_id)
          ->whereDate('date', now()->toDateString())
          ->where('status', 0)
          ->whereNull('checkout')

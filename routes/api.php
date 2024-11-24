@@ -40,7 +40,7 @@ Route::middleware(['auth:sanctum'])->group(function () {
         Route::get('/v1/profiles/count', 'MembersCount'); //Danh sách nhân viên đã nghỉ việc và số lượng
         Route::get('/v1/profiles', 'index');
         Route::post('/v1/profile/auth/register', 'registerNewProfile');
-        Route::put('v1/profile/update', 'update');
+        Route::put('v1/profile/update', 'updateInfo');
         Route::post('/v1/profile/changePassword', 'changePassword'); // API đổi mật khẩu
         Route::put('/v1/profile/delete', 'deactivateProfile');
     });
@@ -125,12 +125,12 @@ Route::middleware(['auth:sanctum'])->group(function () {
         Route::get('/v1/enterprise/info', 'index');
         Route::put('/v1/enterprise/info/update', 'update');
     });
-    Route::controller(ProjectsController::class)->group(function () {
-        Route::get('/v1/projects', 'index');
-        Route::post('/v1/project/create', 'createNewProject');
-        Route::put('/v1/project/update', 'update');
-        Route::delete('/v1/project/delete/{id}', 'delete');
-    });
+    // Route::controller(ProjectsController::class)->group(function () {
+    //     Route::get('/v1/projects', 'index');
+    //     Route::post('/v1/project/create', 'createNewProject');
+    //     Route::put('/v1/project/update', 'update');
+    //     Route::delete('/v1/project/delete/{id}', 'delete');
+    // });
     //
     Route::controller(RelativesController::class)->group(
         function () {
