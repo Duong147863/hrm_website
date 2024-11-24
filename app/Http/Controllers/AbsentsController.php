@@ -7,6 +7,7 @@ use App\Http\Resources\AbsentsResource as AbsentsResource;
 use Illuminate\Routing\Controller;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
+use Carbon\Carbon;
 
 class AbsentsController extends Controller
 {
@@ -88,23 +89,60 @@ class AbsentsController extends Controller
 }
     public function createNewAbsentRequest(Request $request)
     {
+        //Lấy năm hiện tại
+        $currentYear = Carbon::now()->year;
+        // Kiểm tra nếu trường date tồn tại
         $fields = $request->validate([
-            'from' => 'required|date', // Xác thực ngày từ
-            'to' => 'nullable|date',   // Xác thực ngày đến, có thể là null
+            // Xác thực ngày từ bắt buộc phải là ngày từ hiện tại đến tương lai nhưng bắt buộc năm phải là năm hiện tại, không cho phép ngày quá khứ
+            'from' => 'required|date|after_or_equal:'. $currentYear . '-01-01|before_or_equal:' .'31-12-'. $currentYear,
+            // Xác thực ngày đến, có thể là null, bắt buộc phải là ngày từ hiện tại đến tương lai nhưng bắt buộc phải là năm hiện tại, không cho phép ngày quá khứ
+            'to' => 'nullable|date|after_or_equal:from|before_or_equal:'.'31-12-'. $currentYear,
             "reason" => "nullable|string",
             "profile_id" => "required|string",
             "days_off" => "nullable|numeric",
             "status" => "required|integer",
         ]);
-        $newDecision = Absents::create([
-            'from' => ($fields['from']),
-            'to' => ($fields['to']),
-            'reason' => $fields['reason'],
-            'status' => $fields['status'],
-            'profile_id' => $fields['profile_id'],
-            'days_off' => $fields['days_off'],
-        ]);
-        return response()->json([], 201);
+
+        $from = Carbon::parse($request->from);
+        $to = Carbon::parse($request->to);
+
+
+
+        // Tổng số ngày nghỉ đã nghỉ trong năm
+        $totalLeaveDays = DB::table('absents')
+        ->where('profile_id', $request->profile_id) // Lọc theo user
+        ->whereYear('from', $request->from) // Lọc theo năm
+        ->sum('days_off'); //
+
+        // Kiểm tra trùng lặp ngày nghỉ
+        $existingLeave = Absents::where('profile_id', $request->profile_id)
+            ->where(function ($query) use ($from, $to) {
+                $query->whereBetween('from', [$from, $to])
+                    ->orWhereBetween('to', [$from, $to])
+                    ->orWhere(function ($q) use ($from, $to) {
+                        $q->where('from', '<=', $from)
+                            ->where('to', '>=', $to);
+                    });
+            })->exists();
+
+        if ($existingLeave) {
+            return response()->json(['Bạn đã xin nghỉ trong khoản tgian này rồi'], 401);
+        }
+        else if ($totalLeaveDays == 12) //Kiểm tra số ngày phép còn
+        {
+            return response()->json(['Bạn đã hết số ngày phép'], 400);
+        }
+        else {
+            Absents::create([
+                'from' => ($fields['from']),
+                'to' => ($fields['to']),
+                'reason' => $fields['reason'],
+                'status' => $fields['status'],
+                'profile_id' => $fields['profile_id'],
+                'days_off' => $fields['days_off'],
+            ]);
+            return response()->json([], 201);
+        }
     }
 
     public function update(Request $request)
@@ -127,12 +165,7 @@ class AbsentsController extends Controller
         $absents->days_off = $input['days_off'];
         $absents->status = $input['status'];
         $absents->save();
-        $arr = [
-            "status" => true,
-            "message" => "Save successful",
-            "data" => new AbsentsResource($absents)
-        ];
-        return response()->json($arr, 200);
+        return response()->json([], 200);
     }
     public function delete(int $ID)
     {

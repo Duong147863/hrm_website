@@ -36,6 +36,7 @@ class Profiles extends Authenticatable
         "profile_image",
         "start_time",
         "end_time",
+        "days_off",     //ngày được nghỉ phép
         //foriegn key
         "department_id",
         "position_id",
@@ -67,6 +68,7 @@ class Profiles extends Authenticatable
         "place_of_birth" => "string",
         "start_time" => "datetime",
         "end_time" => "datetime",
+        "days_off" => "integer",
         //foriegn key
         "department_id" => "string",
         "position_id" => "string",
