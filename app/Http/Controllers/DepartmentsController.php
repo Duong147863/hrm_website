@@ -29,13 +29,12 @@ class DepartmentsController extends Controller
                 'profiles.profile_name',
                 'positions.position_name'
             )
-            ->where([['departments.department_id', '=', $department_id]],)
+            ->where(['departments.department_id', '=', $department_id],)
             ->get()
         ;
     }
     public function createNewDepartment(Request $request)
     {
-        $this->authorize('isBoardOfDirectors');
         $fields = $request->validate([
             "department_id" => "required|string|unique:departments,department_id",
             "department_name" => "required|string|unique:departments,department_name",
