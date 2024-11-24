@@ -17,7 +17,6 @@ class WorkingProcessesController extends Controller
     public function addNewWWorkingProcesses(Request $request)
     {
         $input = $request->validate([
-            'workingprocess_id' => "string|required",
             'profile_id' => "required|string",
             'workingprocess_content' => "nullable|string",
             'start_time' => "required|date",
@@ -25,6 +24,18 @@ class WorkingProcessesController extends Controller
             'workingprocess_status' => "required|integer",
             'workplace_name' => "required|string",
         ]);
+            // Kiểm tra workplace_name và workingprocess_content không trùng trong cùng profile_id
+    $duplicate = WorkingProcesses::where('profile_id', $input['profile_id'])
+    ->where('workplace_name', $input['workplace_name'])
+    ->where('workingprocess_content', $input['workingprocess_content'])
+    ->first();
+
+if ($duplicate) {
+    return response()->json([
+        "status" => false,
+        "message" => "workplace_name và workingprocess_content không được trùng lặp"
+    ], 422);
+}
         $workingProcesses = WorkingProcesses::create($input);
         $arr = [
             "status" => true,

@@ -17,7 +17,6 @@ class TrainingProcessesController extends Controller
     public function addNewTrainingProccess(Request $request)
     {
         $input = $request->validate([
-            'trainingprocesses_id' => "string|required",
             'profile_id' => "required|string",
             'trainingprocesses_name' => "required|string",
             'trainingprocesses_content' => "required|string",
@@ -25,6 +24,18 @@ class TrainingProcessesController extends Controller
             'end_time' => "nullable|date",
             'trainingprocesses_status' => "integer|required",
         ]);
+                   // Kiểm tra workplace_name và workingprocess_content không trùng trong cùng profile_id
+    $duplicate = TrainingProcesses::where('profile_id', $input['profile_id'])
+    ->where('trainingprocesses_name', $input['trainingprocesses_name'])
+    ->where('trainingprocesses_content', $input['trainingprocesses_content'])
+    ->first();
+
+if ($duplicate) {
+    return response()->json([
+        "status" => false,
+        "message" => "trainingprocesses_name và trainingprocesses_content không được trùng lặp"
+    ], 422);
+}
         $trainingProcesses = TrainingProcesses::create($input);
         $arr = [
             "status" => true,
