@@ -211,7 +211,7 @@ class ProfilesController extends Controller
             "nation" => "required|string",
             "place_of_birth" => "required|string",
             "role_id" => "required|integer",
-            "profile_image" => "required|string",
+            "profile_image" => "nullable|string",
             "start_time" => "nullable|datetime",
             "end_time" => "nullable|datetime",
             //foriegn key

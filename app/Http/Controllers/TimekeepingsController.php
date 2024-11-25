@@ -47,58 +47,72 @@ class TimekeepingsController extends Controller
                 'timekeepings.*',
                 'profiles.profile_name',
                 'shifts.shift_name',
-            )->where(['timekeepings.late','!=',null])
+            )->where(['timekeepings.late', '!=', null])
             ->get()
         ;
     }
     public function checkIn(Request $request)
     {
         // Kiểm tra xem đã check-in chưa
-        $timeKeepings = Timekeepings::where('profile_id', $request->profile_id)
-        ->whereDate('date', now()->toDateString())
-        ->first();
-        $input = $request->validate([
-            'profile_id' => "required|string",
-            'late' => "nullable|date_format:H:i:s",
-            'checkin' => "required|date_format:H:i:s",
-            'shift_id' => "required|string",
-            'date' => "required|date",
-            'status' => 'required|integer'
-        ]);
+        $existingAttendance = Timekeepings::where('profile_id', $request->profile_id)
+            ->whereDate('date', now()->toDateString())
+            ->where('shift_id', $request->shift_id)
+            ->whereNull('checkout')
+            ->first();
 
-       Timekeepings::create([
-            'date'=> $input['date'],
-            'status'=> $input['status'],
-            'late'=> $input['late'],
-            'checkin'=>$input['checkin'],
-            'profile_id'=> $input['profile_id'],
-            'shift_id'=> $input['shift_id'],
-        ]);
-        return response()->json([], 201);
-    }
-    public function checkOut(Request $request)
-    {
-        $checkOut = Timekeepings::find($request->timekeeping_id);
-         // Kiểm tra xem đã check-in nhưng chưa check-out
-         $checkOut = Timekeepings::where('profile_id', $request->profile_id)
-         ->whereDate('date', now()->toDateString())
-         ->where('status', 0)
-         ->whereNull('checkout')
-         ->first();
+        if ($existingAttendance) { //Nếu rồi thì check out
+            $input = $request->validate([
+                'leaving_soon' => "nullable|date_format:H:i:s",
+                'checkout' => "required|date_format:H:i:s",
+            ]);
+            $existingAttendance->checkout = $input['checkout'];
+            $existingAttendance->leaving_soon = $input['leaving_soon'];
+            $existingAttendance->status = 1;
+            $existingAttendance->save();
+            return response()->json(["Check out success"], 200);
+        } else {
+            $input = $request->validate([
+                'profile_id' => "required|string",
+                'late' => "nullable|date_format:H:i:s",
+                'checkin' => "required|date_format:H:i:s",
+                'shift_id' => "required|string",
+                'date' => "required|date",
+            ]);
 
-        $input = $request->validate([
-            'checkout' => "required|time",
-            'leaving_soon' => "nullable|time",
-            'status' => 'required|integer'
-        ]);
-        $checkOut->timekeeping_id = $input['timekeeping_id'];
-        $checkOut->profile_id = $input['profile_id'];
-        $checkOut->shift_id = $input['shift_id'];
-        $checkOut->checkout = $input['checkout'];
-        $checkOut->shift_id = $input['shift_id'];
-        $checkOut->date = $input['date'];
-        $checkOut->status = $input['status'];
-        $checkOut->save();
-        return response()->json([], 200);
+            Timekeepings::create([
+                'date' => $input['date'],
+                'status' => 0,
+                'late' => $input['late'],
+                'checkin' => $input['checkin'],
+                'profile_id' => $input['profile_id'],
+                'shift_id' => $input['shift_id'],
+            ]);
+            return response()->json(["Check in success"], 201);
+        }
     }
+    // public function checkOut(Request $request)
+    // {
+    //     $checkOut = Timekeepings::find($request->timekeeping_id);
+    //     // Kiểm tra xem đã check-in nhưng chưa check-out
+    //     $checkOut = Timekeepings::where('profile_id', $request->profile_id)
+    //         ->whereDate('date', now()->toDateString())
+    //         ->where('status', 0)
+    //         ->whereNull('checkout')
+    //         ->first();
+
+    //     $input = $request->validate([
+    //         'checkout' => "required|time",
+    //         'leaving_soon' => "nullable|time",
+    //         'status' => 'required|integer'
+    //     ]);
+    //     $checkOut->timekeeping_id = $input['timekeeping_id'];
+    //     $checkOut->profile_id = $input['profile_id'];
+    //     $checkOut->shift_id = $input['shift_id'];
+    //     $checkOut->checkout = $input['checkout'];
+    //     $checkOut->shift_id = $input['shift_id'];
+    //     $checkOut->date = $input['date'];
+    //     $checkOut->status = $input['status'];
+    //     $checkOut->save();
+    //     return response()->json([], 200);
+    // }
 }
