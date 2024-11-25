@@ -29,7 +29,7 @@ class DepartmentsController extends Controller
                 'profiles.profile_name',
                 'positions.position_name'
             )
-            ->where([['departments.department_id', '=', $department_id]],)
+            ->where(['departments.department_id', '=', $department_id],)
             ->get()
         ;
     }

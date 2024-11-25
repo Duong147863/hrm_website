@@ -4,11 +4,9 @@ namespace App\Http\Controllers;
 
 use Illuminate\Http\Request;
 use App\Models\Profiles;
-use Illuminate\Support\Facades\Auth;
 use Illuminate\Routing\Controller;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Hash;
-use Illuminate\Validation\ValidationException;
 
 class ProfilesController extends Controller
 {
@@ -48,8 +46,8 @@ class ProfilesController extends Controller
     }
     public function MembersCount() // SL nhân viên đã nghỉ việc và đang làm việc
     {
-        // Lấy tất cả nhân viên đã nghỉ việc (profile_status = 0)
-        $quitProfiles = Profiles::where('profile_status', "=",-1)
+        // Lấy tất cả nhân viên đã nghỉ việc (profile_status = -1)
+        $quitProfiles = Profiles::where('profile_status', -1)
         ->get();
 
         // Lấy tất cả nhân viên đang làm việc (profile_status = 1)
@@ -214,8 +212,8 @@ class ProfilesController extends Controller
             "place_of_birth" => "required|string",
             "role_id" => "required|integer",
             "profile_image" => "nullable|string",
-            "start_time" => "required|date",
-            "end_time" => "required|date",
+            "start_time" => "nullable|datetime",
+            "end_time" => "nullable|datetime",
             //foriegn key
             "department_id" => "nullable|string",
             "position_id" => "nullable|string",
@@ -268,7 +266,7 @@ class ProfilesController extends Controller
             "message" => "Logged out"
         ]);
     }
-    public function update(Request $request)
+    public function updateInfo(Request $request)
     {
         $profiles = Profiles::find($request->profile_id);
         // Kiểm tra xem hồ sơ có tồn tại không
@@ -293,8 +291,9 @@ class ProfilesController extends Controller
             "place_of_birth" => "string",
             "role_id" => "integer",
             "profile_image" => "nullable|string",
-            "start_time" => "date",
-            "end_time" => "date",
+            "start_time" => "datetime",
+            "end_time" => "datetime",
+            "days_off" => "integer",
             //foriegn key
             "department_id" => "nullable|string",
             "position_id" => "nullable|string",
@@ -318,6 +317,7 @@ class ProfilesController extends Controller
         $profiles->id_license_day = $input['id_license_day'];
         $profiles->start_time = $input['start_time'];
         $profiles->end_time = $input['end_time'];
+        $profiles->days_off = $input['days_off'];
         // $profiles->password = $input['password'];
         $profiles->role_id = $input['role_id'];
         if (isset($input['profile_image'])) {

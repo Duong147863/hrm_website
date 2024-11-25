@@ -1,0 +1,20 @@
+runtime: php72
+env: flex
+
+runtime_config:
+  document_root: public
+
+env_variables:
+  APP_ENV: production
+  APP_DEBUG: false
+  APP_KEY: CMkK0NkivTLkMptezbjKyV+GG5yPFL0Wro8PoZgBR/M=
+  DB_CONNECTION: mysql
+  DB_HOST: '/cloudsql/southern-idea-442617-h8:asia-southeast2:ldoffice-hrm-442617'
+  DB_DATABASE: 'ldoffice'
+  DB_USERNAME: 'YOUR_DATABASE_USERNAME'
+  DB_PASSWORD: 'YOUR_DATABASE_PASSWORD'
+  STORAGE_DIR: '/tmp'
+
+handlers:
+  - url: /.*
+    script: auto

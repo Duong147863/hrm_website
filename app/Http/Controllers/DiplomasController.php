@@ -46,6 +46,16 @@ class DiplomasController extends Controller
             "mode_of_study" => "required|string",
             'profile_id' => "required|string",
         ]);
+          // Kiểm tra nếu tên bằng cấp đã tồn tại cho cùng profile_id
+          $nameDiploman = Diplomas::where('profile_id', $fields['profile_id'])
+          ->where('diploma_degree_name', $fields['diploma_degree_name'])
+          ->first();
+          if ($nameDiploman) {
+          return response()->json([
+          "status" => false,
+          "message" => "Tên bằng cấp không được trùng lặp trong danh sách bằng cấp của nhân viên đó."
+          ], 422);
+          }
         $newDiploma = Diplomas::create([
             'diploma_id' => ($fields['diploma_id']),
             'mode_of_study' => ($fields['mode_of_study']),
