@@ -26,62 +26,49 @@ class PositionsController extends Controller
     public function createNewPosition(Request $request)
     {
         $fields = $request->validate([
-            "position_id" => "required|string",
-            "position_name" => "required|string",
+            "position_id" => "required|string|unique:positions,position_id",
+            "position_name" => "required|string|unique:positions,position_name",
+            "department_id" => "required|string",
         ]);
         $newPosition = Positions::create([
             'position_id' => ($fields['position_id']),
             'position_name' => ($fields['position_name']),
+            'department_id' => ($fields['department_id']),
         ]);
-        $arr = [
-            "status" => true,
-            "message" => "Delete success",
-            "data" => new PositionsResource($newPosition)
-        ];
-        response()->json($arr, 201);
+        response()->json([], 201);
     }
 
     public function update(Request $request)
     {
         $position = Positions::find($request->position_id);
         $input = $request->validate([
-            "position_id" => "required|string",
-            "position_name" => "required|string",
+            "position_id" => "required|string|unique:positions,position_id",
+            "position_name" => "required|string|unique:positions,position_name",
+            "department_id" => "required|string",
         ]);
         $position->position_id = $input['position_id'];
         $position->position_name = $input['position_name'];
+        $position->department_id = $input['department_id'];
         $position->save();
         return response()->json(["message" => "Update data success"], 200);
     }
-
-    // public function delete(Positions $positions)
-    // {
-    //     $positions->delete();
-    //     $arr = [
-    //         "status" => true,
-    //         "message" => "Delete success",
-    //         "data" => []
-    //     ];
-    //     return response()->json($arr, 200);
-    // }
     public function delete($id)
-{
-    $position = Positions::find($id);
+    {
+        $position = Positions::find($id);
 
-    if (!$position) {
+        if (!$position) {
+            return response()->json([
+                "status" => false,
+                "message" => "Position not found",
+                "data" => []
+            ], 404);
+        }
+
+        $position->delete();
         return response()->json([
-            "status" => false,
-            "message" => "Position not found",
+            "status" => true,
+            "message" => "Delete success",
             "data" => []
-        ], 404);
+        ], 200);
     }
-
-    $position->delete();
-    return response()->json([
-        "status" => true,
-        "message" => "Delete success",
-        "data" => []
-    ], 200);
-}
-
 }

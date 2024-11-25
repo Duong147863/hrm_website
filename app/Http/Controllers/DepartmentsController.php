@@ -33,9 +33,20 @@ class DepartmentsController extends Controller
             ->get()
         ;
     }
+    public function getDepartmentsByPosition()
+    {
+        return DB::table('departments')
+            ->join('positions', 'positions.department_id', '=', 'departments.department_id')
+            ->select(
+                'departments.department_id',
+                'departments.department_name',
+                'positions.position_id',
+                'positions.position_name'
+            )
+            ->get();
+    }
     public function createNewDepartment(Request $request)
     {
-        $this->authorize('isBoardOfDirectors');
         $fields = $request->validate([
             "department_id" => "required|string|unique:departments,department_id",
             "department_name" => "required|string|unique:departments,department_name",
@@ -56,8 +67,11 @@ class DepartmentsController extends Controller
         ]);
         $department->department_id = $input['department_id'];
         $department->department_name = $input['department_name'];
-        $department->update();
-        return response()->json([], 200);
+        $department->save();
+        return response()->json([
+            "status" => true,
+            "message" => "Lưu thành công"
+        ], 200); 
     }
 
     public function delete($id)

@@ -10,6 +10,8 @@ class Enterprises extends Model
     use HasFactory;
     protected $table = "enterprises";
     protected $primaryKey = "enterprise_id";
+    protected $keyType = "integer";
+
     protected $fillable = [
         "enterprise_id",
         "name",

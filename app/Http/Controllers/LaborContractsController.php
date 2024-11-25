@@ -25,12 +25,9 @@ class LaborContractsController extends Controller
     public function showLaborContractDetails(string $profile_id)
     {
         return DB::table('labor_contract')
-            ->join('profiles', 'labor_contract_id', '=', 'profiles.labor_contract_id')
-            //  ->join('profiles', 'profiles.profile_id', '=', 'CEO') // Lấy ra thông tin người đại diện công ty (Giám đốc)
-            ->join('enterprises', 'enterprise_id', '=', 'enterprises.enterprise_id')
+            ->join('profiles', 'profile_id', '=', 'profiles.profile_id')
             ->select(
                 'labor_contract.*',
-                'enterprises.*',
                 "profiles.profile_name",
                 "profiles.birthday",
                 "profiles.identify_num",
@@ -41,7 +38,7 @@ class LaborContractsController extends Controller
             )
             ->where([
                 ['profiles.profile_id' => $profile_id],
-                ['labor_contract.labor_contract_id' => 'profiles.labor_contract_id']
+                ['labor_contract.profile_id' => 'profiles.profile_id']
             ])
             ->get();
     }
@@ -52,16 +49,14 @@ class LaborContractsController extends Controller
             "end_time" => "nullable|date_format:d-m-Y",
             "start_time" => "required|date_format:d-m-Y",
             "image" => "required|string",
-            "enterprise_id" => "required|integer",
-            "department_id" => "required|string",
+            "profile_id" => "required|string",
         ]);
         $newLaborContract = LaborContracts::create([
             'labor_contract_id' => ($fields['labor_contract_id']),
-            'enterprise_id' => ($fields['enterprise_id']),
             'start_time' => ($fields['start_time']),
             'image' => ($fields['image']),
             'end_time' => ($fields['end_time']),
-            'department_id' => ($fields['department_id']),
+            'profile_id' => ($fields['profile_id']),
         ]);
         return response()->json([], 201);
     }
@@ -73,14 +68,12 @@ class LaborContractsController extends Controller
             "end_time" => "nullable|date_format:d-m-Y",
             "start_time" => "required|date_format:d-m-Y",
             "image" => "nullable|string",
-            "enterprise_id" => "boolean|required",
-            "department_id" => "required|string",
+            "profile_id" => "required|string",
         ]);
         $laborContracts->labor_contract_id = $input['labor_contract_id'];
         $laborContracts->start_time = $input['start_time'];
         $laborContracts->end_time = $input['end_time'];
-        $laborContracts->enterprise_id = $input['enterprise_id'];
-        $laborContracts->department_id = $input['department_id'];
+        $laborContracts->profile_id = $input['profile_id'];
         $laborContracts->image = $input['image'];
         $laborContracts->save();
         return response()->json([], 200);
@@ -88,7 +81,7 @@ class LaborContractsController extends Controller
     public function delete($id)
     {
         $laborContracts = LaborContracts::find($id);
-    
+
         if (!$laborContracts) {
             return response()->json([
                 "status" => false,
@@ -96,7 +89,7 @@ class LaborContractsController extends Controller
                 "data" => []
             ], 404);
         }
-    
+
         $laborContracts->delete();
         return response()->json([
             "status" => true,

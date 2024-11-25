@@ -34,11 +34,13 @@ class Profiles extends Authenticatable
         "current_address",
         "profile_status",
         "profile_image",
+        "start_time",
+        "end_time",
         //foriegn key
         "department_id",
         "position_id",
         "salary_id",
-        "labor_contract_id"
+        // "labor_contract_id"
     ];
     protected $hidden = [
         // 'password',
@@ -63,6 +65,8 @@ class Profiles extends Authenticatable
         "nation" => "string",
         "role_id" => "integer",
         "place_of_birth" => "string",
+        "start_time" => "date",
+        "end_time" => "date",
         //foriegn key
         "department_id" => "string",
         "position_id" => "string",

@@ -214,11 +214,14 @@ class ProfilesController extends Controller
             "place_of_birth" => "required|string",
             "role_id" => "required|integer",
             "profile_image" => "nullable|string",
+            "start_time" => "required|date",
+            "end_time" => "required|date",
             //foriegn key
             "department_id" => "nullable|string",
             "position_id" => "nullable|string",
             "salary_id" => "nullable|string",
-            "labor_contract_id" => "nullable|string",
+            // "labor_contract_id" => "nullable|string",
+            
         ]);
 
         $newProfile = Profiles::create([
@@ -239,11 +242,13 @@ class ProfilesController extends Controller
             'password' => bcrypt($fields['password']),
             'role_id' => $fields['role_id'],
             'profile_status' => $fields['profile_status'],
+            'start_time' => $fields['start_time'],
+            'end_time' => $fields['end_time'],
             //fk
             "department_id" => $fields["department_id"],
             "position_id" => $fields["position_id"],
             "salary_id" => $fields["salary_id"],
-            "labor_contract_id" => $fields["labor_contract_id"],
+            // "labor_contract_id" => $fields["labor_contract_id"],
         ]);
         // Tạo API token cho người dùng
         $token = $newProfile->createToken('API TOKEN')->plainTextToken;
@@ -288,11 +293,13 @@ class ProfilesController extends Controller
             "place_of_birth" => "string",
             "role_id" => "integer",
             "profile_image" => "nullable|string",
+            "start_time" => "date",
+            "end_time" => "date",
             //foriegn key
             "department_id" => "nullable|string",
             "position_id" => "nullable|string",
             "salary_id" => "nullable|string",
-            "labor_contract_id" => "nullable|string",
+            // "labor_contract_id" => "nullable|string",
         ]);
         $profiles->profile_id = $input['profile_id'];
         $profiles->profile_name = $input['profile_name'];
@@ -309,6 +316,8 @@ class ProfilesController extends Controller
         $profiles->profile_status = $input['profile_status'];
         $profiles->identify_num = $input['identify_num'];
         $profiles->id_license_day = $input['id_license_day'];
+        $profiles->start_time = $input['start_time'];
+        $profiles->end_time = $input['end_time'];
         // $profiles->password = $input['password'];
         $profiles->role_id = $input['role_id'];
         if (isset($input['profile_image'])) {
@@ -322,11 +331,11 @@ class ProfilesController extends Controller
         $profiles->salary_id = $input['salary_id'];
         $profiles->department_id = $input['department_id'];
         $profiles->position_id = $input['position_id'];
-        $profiles->labor_contract_id = $input['labor_contract_id'];
+        // $profiles->labor_contract_id = $input['labor_contract_id'];
         $profiles->save();
         return response()->json([], 200);
     }
-    public function deactivateProfile(Request $request)
+    public function deactivateProfile(Request $request)//Khoá tk nếu nhân sự nghỉ việc
     {
         $profile = Profiles::find($request->profile_id);
 

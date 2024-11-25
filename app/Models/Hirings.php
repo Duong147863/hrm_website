@@ -9,6 +9,8 @@ class Hirings extends Model
 {
     protected $table = "hirings";
     protected $primaryKey = "hiring_profile_id";
+    protected $keyType = "integer";
+
     protected $fillable = [
         "hiring_profile_id",
         "profile_name",
