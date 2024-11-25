@@ -68,6 +68,8 @@ Route::middleware(['auth:sanctum'])->group(function () {
     // });
     //
     Route::controller(DepartmentsController::class)->group(function () {
+        Route::get('/v1/departments/profiles/position/{id}', 'getDepartmentMembers');
+        Route::get('/v1/departments/position', 'getDepartmentsByPosition');
         Route::get('/v1/departments', 'index');
         Route::put('/v1/department/update', 'update');
         Route::post('/v1/department/create', 'createNewDepartment');

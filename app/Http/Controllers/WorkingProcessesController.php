@@ -23,6 +23,18 @@ class WorkingProcessesController extends Controller
             'end_time' => "nullable|date",
             'workplace_name' => "required|string",
         ]);
+            // Kiểm tra workplace_name và workingprocess_content không trùng trong cùng profile_id
+    $duplicate = WorkingProcesses::where('profile_id', $input['profile_id'])
+    ->where('workplace_name', $input['workplace_name'])
+    ->where('workingprocess_content', $input['workingprocess_content'])
+    ->first();
+
+if ($duplicate) {
+    return response()->json([
+        "status" => false,
+        "message" => "workplace_name và workingprocess_content không được trùng lặp"
+    ], 422);
+}
         $workingProcesses = WorkingProcesses::create($input);
         $arr = [
             "status" => true,

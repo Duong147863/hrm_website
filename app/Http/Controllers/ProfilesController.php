@@ -211,14 +211,15 @@ class ProfilesController extends Controller
             "nation" => "required|string",
             "place_of_birth" => "required|string",
             "role_id" => "required|integer",
-            "profile_image" => "required|string",
+            "profile_image" => "nullable|string",
             "start_time" => "nullable|datetime",
             "end_time" => "nullable|datetime",
             //foriegn key
             "department_id" => "nullable|string",
             "position_id" => "nullable|string",
             "salary_id" => "nullable|string",
-            "labor_contract_id" => "nullable|string",
+            // "labor_contract_id" => "nullable|string",
+            
         ]);
 
         $newProfile = Profiles::create([
@@ -245,7 +246,7 @@ class ProfilesController extends Controller
             "department_id" => $fields["department_id"],
             "position_id" => $fields["position_id"],
             "salary_id" => $fields["salary_id"],
-            "labor_contract_id" => $fields["labor_contract_id"],
+            // "labor_contract_id" => $fields["labor_contract_id"],
         ]);
         // Tạo API token cho người dùng
         $token = $newProfile->createToken('API TOKEN')->plainTextToken;
@@ -297,7 +298,7 @@ class ProfilesController extends Controller
             "department_id" => "nullable|string",
             "position_id" => "nullable|string",
             "salary_id" => "nullable|string",
-            "labor_contract_id" => "nullable|string",
+            // "labor_contract_id" => "nullable|string",
         ]);
         $profiles->profile_id = $input['profile_id'];
         $profiles->profile_name = $input['profile_name'];
@@ -330,7 +331,7 @@ class ProfilesController extends Controller
         $profiles->salary_id = $input['salary_id'];
         $profiles->department_id = $input['department_id'];
         $profiles->position_id = $input['position_id'];
-        $profiles->labor_contract_id = $input['labor_contract_id'];
+        // $profiles->labor_contract_id = $input['labor_contract_id'];
         $profiles->save();
         return response()->json([], 200);
     }
