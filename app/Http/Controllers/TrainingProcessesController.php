@@ -23,6 +23,18 @@ class TrainingProcessesController extends Controller
             'start_time' => "required|date",
             'end_time' => "nullable|date",
         ]);
+                   // Kiểm tra workplace_name và workingprocess_content không trùng trong cùng profile_id
+    $duplicate = TrainingProcesses::where('profile_id', $input['profile_id'])
+    ->where('trainingprocesses_name', $input['trainingprocesses_name'])
+    ->where('trainingprocesses_content', $input['trainingprocesses_content'])
+    ->first();
+
+if ($duplicate) {
+    return response()->json([
+        "status" => false,
+        "message" => "trainingprocesses_name và trainingprocesses_content không được trùng lặp"
+    ], 422);
+}
         $trainingProcesses = TrainingProcesses::create($input);
         $arr = [
             "status" => true,

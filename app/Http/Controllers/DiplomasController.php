@@ -18,22 +18,19 @@ class DiplomasController extends Controller
         return response()->json($diploma);
     }
 
-    // public function getDiplomaOfProfile(string $profile_id)
-    // {
-    //     return
-    //         DB::table('diplomas')
-    //         ->join('profiles', 'diplomas.profile_id', '=', 'profiles.profile_id')
-    //         ->select(
-    //             'profiles.profile_name',
-    //             'diplomas.*'
-    //         )
-    //         ->where([['profiles.profile_id', '=', $profile_id]],)
-    //         ->get()
-    //     ;
-    // }
     public function getDiplomaOfProfile(string $profile_id)
     {
-        return Diplomas::where('profile_id', $profile_id)->get();
+        $diplomas = Diplomas::where('profile_id', $profile_id)
+            ->with('profile') // Load quan hệ với profile
+            ->get();
+    
+        $result = $diplomas->map(function ($diploma) {
+            return [
+                'profile_name' => $diploma->profile->profile_name, // Lấy tên profile
+            ];
+        });
+    
+        return response()->json($result);
     }
     public function createNewDiploma(Request $request)
     {
@@ -49,6 +46,16 @@ class DiplomasController extends Controller
             "mode_of_study" => "required|string",
             'profile_id' => "required|string",
         ]);
+          // Kiểm tra nếu tên bằng cấp đã tồn tại cho cùng profile_id
+          $nameDiploman = Diplomas::where('profile_id', $fields['profile_id'])
+          ->where('diploma_degree_name', $fields['diploma_degree_name'])
+          ->first();
+          if ($nameDiploman) {
+          return response()->json([
+          "status" => false,
+          "message" => "Tên bằng cấp không được trùng lặp trong danh sách bằng cấp của nhân viên đó."
+          ], 422);
+          }
         $newDiploma = Diplomas::create([
             'diploma_id' => ($fields['diploma_id']),
             'mode_of_study' => ($fields['mode_of_study']),

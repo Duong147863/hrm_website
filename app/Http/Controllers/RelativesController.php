@@ -5,7 +5,8 @@ namespace App\Http\Controllers;
 use Illuminate\Http\Request;
 use App\Models\Relatives;
 use Illuminate\Routing\Controller;
-
+use App\Models\Profiles;
+use App\Http\Controllers\ProfilesController;
 class RelativesController extends Controller
 {
     public function show(string $id)
@@ -31,6 +32,31 @@ class RelativesController extends Controller
             "relative_current_address" => "required|string",
             "profile_id" => 'required|string',
         ]);
+         // Kiểm tra nếu tên thân nhân đã tồn tại cho cùng profile_id
+        $nameRelative = Relatives::where('profile_id', $fields['profile_id'])
+        ->where('relative_name', $fields['relative_name'])
+        ->first();
+        if ($nameRelative) {
+        return response()->json([
+        "status" => false,
+        "message" => "Tên thân nhân không được trùng lặp trong danh sách thân nhân của nhân viên đó."
+        ], 422);
+        }
+          // Lấy thông tin nhân viên từ bảng Profiles
+        $employee = Profiles::find($fields['profile_id']);
+        if (!$employee) {
+        return response()->json([
+            "status" => false,
+            "message" => "Không tìm thấy nhân viên với mã nhân viên này."
+        ], 404);
+        }
+        // Kiểm tra nếu tên thân nhân trùng với tên nhân viên
+         if ($fields['relative_name'] === $employee->profile_name) {
+        return response()->json([
+            "status" => false,
+            "message" => "Tên thân nhân không được trùng với tên nhân viên."
+        ], 422);
+        }
         $newRelative = Relatives::create(attributes: [
             'profile_id' => $fields['profile_id'],
             'relative_name' => $fields['relative_name'],
@@ -42,8 +68,12 @@ class RelativesController extends Controller
             "relative_temp_address" => $fields["relative_temp_address"],
             "relationship" => $fields["relationship"],
         ]);
-
-        return response()->json([], 201);
+       
+        return response()->json([
+            "status" => true,
+            "message" => "Thân nhân đã được thêm thành công.",
+            "data" => $newRelative
+        ], 201);
     }
 
     public function update(Request $request)
@@ -56,6 +86,7 @@ class RelativesController extends Controller
             ], 404);  // Trả về lỗi 404 nếu không tìm thấy relative
         }
         $input = $request->validate([
+            "relative_id" => "required|integer",
             "relative_name" => "required|string",
             "relative_phone" => "required|string",
             "relative_birthday" => "required|date",
@@ -66,7 +97,34 @@ class RelativesController extends Controller
             "relative_current_address" => "required|string",
             "profile_id" => 'required|string',
         ]);
+            // Kiểm tra nếu tên thân nhân đã tồn tại cho cùng profile_id (loại trừ bản ghi hiện tại)
+            $nameRelative = Relatives::where('profile_id', $input['profile_id'])
+            ->where('relative_name', $input['relative_name'])
+            ->where('relative_id', '!=', $relatives->relative_id)
+            ->first();
+            if ($nameRelative) {
+                return response()->json([
+                    "status" => false,
+                    "message" => "Tên thân nhân không được trùng lặp trong danh sách thân nhân của nhân viên này."
+                ], 422);
+            }
 
+          // Lấy thông tin nhân viên từ bảng Profiles
+          $employee = Profiles::find($input['profile_id']);
+          if (!$employee) {
+          return response()->json([
+              "status" => false,
+              "message" => "Không tìm thấy nhân viên với mã nhân viên này."
+          ], 404);
+          }
+          // Kiểm tra nếu tên thân nhân trùng với tên nhân viên
+           if ($input['relative_name'] === $employee->profile_name) {
+          return response()->json([
+              "status" => false,
+              "message" => "Tên thân nhân không được trùng với tên nhân viên."
+          ], 422);
+          }
+        $relatives->relative_id = $input['relative_id'];
         $relatives->relative_name = $input['relative_name'];
         $relatives->relative_phone = $input["relative_phone"];
         $relatives->relative_birthday = $input["relative_birthday"];
@@ -77,8 +135,12 @@ class RelativesController extends Controller
         $relatives->relative_current_address = $input["relative_current_address"];
         $relatives->profile_id = $input["profile_id"];
         $relatives->save();
-
-        return response()->json([], 200);
+        
+        return response()->json([
+            "status" => true,
+            "message" => "Thân nhân đã được cập nhật thành công.",
+            "data" => $relatives
+        ], 200);
     }
 
     public function delete(int $relative_id)
