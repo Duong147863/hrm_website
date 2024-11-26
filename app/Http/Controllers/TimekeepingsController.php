@@ -62,11 +62,11 @@ class TimekeepingsController extends Controller
 
         if ($existingAttendance) { //Nếu rồi thì check out
             $input = $request->validate([
-                'leaving_soon' => "nullable|date_format:H:i:s",
+                // 'leaving_soon' => "nullable|date_format:H:i:s",
                 'checkout' => "required|date_format:H:i:s",
             ]);
             $existingAttendance->checkout = $input['checkout'];
-            $existingAttendance->leaving_soon = $input['leaving_soon'];
+            // $existingAttendance->leaving_soon = $input['leaving_soon'];
             $existingAttendance->status = 1;
             $existingAttendance->save();
             return response()->json(["Check out success"], 200);

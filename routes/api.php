@@ -90,7 +90,8 @@ Route::middleware(['auth:sanctum'])->group(function () {
     });
     //
     Route::controller(TimekeepingsController::class)->group(function () {
-        Route::get('/v1/timekeepings', 'index');
+        Route::get('/v1/all', '');
+        Route::get('/v1/all/{id}', 'showByProfileID');
         Route::get('/v1/late', '');
         Route::post('/v1/checkin', 'checkIn');
         Route::put('/v1/checkout/{id}', 'checkOut');
@@ -114,12 +115,12 @@ Route::middleware(['auth:sanctum'])->group(function () {
     //     Route::delete('/v1/insurances/delete/{id}', 'delete');
     // });
     //
-    Route::controller(DecisionsController::class)->group(function () {
-        Route::get('/v1/decisions/abc', 'index');
-        Route::put('/v1/decision/update', 'update');
-        Route::post('/v1/decision/create', 'createNewdecision');
-        Route::delete('/v1/decision/delete/{id}', 'delete');
-    });
+    // Route::controller(DecisionsController::class)->group(function () {
+    //     Route::get('/v1/decisions/abc', 'index');
+    //     Route::put('/v1/decision/update', 'update');
+    //     Route::post('/v1/decision/create', 'createNewdecision');
+    //     Route::delete('/v1/decision/delete/{id}', 'delete');
+    // });
     //
     Route::controller(EnterprisesController::class)->group(function () {
         Route::get('/v1/enterprise/info', 'index');

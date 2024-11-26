@@ -106,7 +106,10 @@ class AbsentsController extends Controller
         $from = Carbon::parse($request->from);
         $to = Carbon::parse($request->to);
 
-
+        // Không cho phép nghỉ vào thứ 7 và CN
+        // if ($start->isWeekend() || $end->isWeekend()) {
+        //     return false;
+        // }
 
         // Tổng số ngày nghỉ đã nghỉ trong năm
         $totalLeaveDays = DB::table('absents')
