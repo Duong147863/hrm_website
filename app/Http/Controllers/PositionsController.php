@@ -52,17 +52,6 @@ class PositionsController extends Controller
         $position->save();
         return response()->json(["message" => "Update data success"], 200);
     }
-
-    // public function delete(Positions $positions)
-    // {
-    //     $positions->delete();
-    //     $arr = [
-    //         "status" => true,
-    //         "message" => "Delete success",
-    //         "data" => []
-    //     ];
-    //     return response()->json($arr, 200);
-    // }
     public function delete($id)
     {
         $position = Positions::find($id);

@@ -36,12 +36,12 @@ class Profiles extends Authenticatable
         "profile_image",
         "start_time",
         "end_time",
-        "days_off",     //ngày được nghỉ phép
+        // "days_off",     //ngày được nghỉ phép
         //foriegn key
         "department_id",
         "position_id",
         "salary_id",
-        "labor_contract_id"
+        // "labor_contract_id"
     ];
     protected $hidden = [
         // 'password',
@@ -66,14 +66,14 @@ class Profiles extends Authenticatable
         "nation" => "string",
         "role_id" => "integer",
         "place_of_birth" => "string",
-        "start_time" => "datetime",
-        "end_time" => "datetime",
-        "days_off" => "integer",
+        "start_time" => "date",
+        "end_time" => "date",
+        // "days_off" => "integer",
         //foriegn key
         "department_id" => "string",
         "position_id" => "string",
         "salary_id" => "string",
-        "labor_contract_id" => "string",
+        // "labor_contract_id" => "string",
     ];
 
     public function roles()
