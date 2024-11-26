@@ -19,62 +19,62 @@ class RelativesController extends Controller
     {
         return Relatives::where('profile_id', $profile_id)->get();
     }
-    public function addNewRelatives(Request $request)
-    {
-        $fields = $request->validate([
-            "relative_name" => "required|string",
-            "relative_phone" => "required|string",
-            "relative_birthday" => "required|date_format:d-m-Y",
-            "relationship" => "required|string",
-            "relative_job" => "required|string",
-            "relative_nation" => "required|string",
-            "relative_temp_address" => "required|string",
-            "relative_current_address" => "required|string",
-            "profile_id" => 'required|string',
-        ]);
-         // Kiểm tra nếu tên thân nhân đã tồn tại cho cùng profile_id
-        $nameRelative = Relatives::where('profile_id', $fields['profile_id'])
-        ->where('relative_name', $fields['relative_name'])
-        ->first();
-        if ($nameRelative) {
-        return response()->json([
-        "status" => false,
-        "message" => "Tên thân nhân không được trùng lặp trong danh sách thân nhân của nhân viên đó."
-        ], 422);
-        }
-          // Lấy thông tin nhân viên từ bảng Profiles
-        $employee = Profiles::find($fields['profile_id']);
-        if (!$employee) {
-        return response()->json([
+        public function addNewRelatives(Request $request)
+        {
+            $fields = $request->validate([
+                "relative_name" => "required|string",
+                "relative_phone" => "required|string",
+                "relative_birthday" => "required|date_format:d-m-Y",
+                "relationship" => "required|string",
+                "relative_job" => "required|string",
+                "relative_nation" => "required|string",
+                "relative_temp_address" => "required|string",
+                "relative_current_address" => "required|string",
+                "profile_id" => 'required|string',
+            ]);
+            // Kiểm tra nếu tên thân nhân đã tồn tại cho cùng profile_id
+            $nameRelative = Relatives::where('profile_id', $fields['profile_id'])
+            ->where('relative_name', $fields['relative_name'])
+            ->first();
+            if ($nameRelative) {
+            return response()->json([
             "status" => false,
-            "message" => "Không tìm thấy nhân viên với mã nhân viên này."
-        ], 404);
+            "message" => "Tên thân nhân không được trùng lặp trong danh sách thân nhân của nhân viên đó."
+            ], 422);
+            }
+            // Lấy thông tin nhân viên từ bảng Profiles
+            $employee = Profiles::find($fields['profile_id']);
+            if (!$employee) {
+            return response()->json([
+                "status" => false,
+                "message" => "Không tìm thấy nhân viên với mã nhân viên này."
+            ], 404);
+            }
+            // Kiểm tra nếu tên thân nhân trùng với tên nhân viên
+            if ($fields['relative_name'] === $employee->profile_name) {
+            return response()->json([
+                "status" => false,
+                "message" => "Tên thân nhân không được trùng với tên nhân viên."
+            ], 422);
+            }
+            $newRelative = Relatives::create(attributes: [
+                'profile_id' => $fields['profile_id'],
+                'relative_name' => $fields['relative_name'],
+                'relative_phone' => $fields['relative_phone'],
+                'relative_birthday' => $fields['relative_birthday'],
+                'relative_nation' => $fields['relative_nation'],
+                'relative_job' => $fields['relative_job'],
+                "relative_current_address" => $fields["relative_current_address"],
+                "relative_temp_address" => $fields["relative_temp_address"],
+                "relationship" => $fields["relationship"],
+            ]);
+        
+            return response()->json([
+                "status" => true,
+                "message" => "Thân nhân đã được thêm thành công.",
+                "data" => $newRelative
+            ], 201);
         }
-        // Kiểm tra nếu tên thân nhân trùng với tên nhân viên
-         if ($fields['relative_name'] === $employee->profile_name) {
-        return response()->json([
-            "status" => false,
-            "message" => "Tên thân nhân không được trùng với tên nhân viên."
-        ], 422);
-        }
-        $newRelative = Relatives::create(attributes: [
-            'profile_id' => $fields['profile_id'],
-            'relative_name' => $fields['relative_name'],
-            'relative_phone' => $fields['relative_phone'],
-            'relative_birthday' => $fields['relative_birthday'],
-            'relative_nation' => $fields['relative_nation'],
-            'relative_job' => $fields['relative_job'],
-            "relative_current_address" => $fields["relative_current_address"],
-            "relative_temp_address" => $fields["relative_temp_address"],
-            "relationship" => $fields["relationship"],
-        ]);
-       
-        return response()->json([
-            "status" => true,
-            "message" => "Thân nhân đã được thêm thành công.",
-            "data" => $newRelative
-        ], 201);
-    }
 
     public function update(Request $request)
     {
