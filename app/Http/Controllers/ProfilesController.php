@@ -7,7 +7,7 @@ use App\Models\Profiles;
 use Illuminate\Routing\Controller;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Hash;
-
+use Carbon\Carbon;
 class ProfilesController extends Controller
 {
     public function index()
@@ -20,12 +20,16 @@ class ProfilesController extends Controller
     {
         return Profiles::findOrFail($profile_id);
     }
-    public function departmentMembersCount(string $department_id) //SL nhân viên đang làm việc tại phòng ban
+    public function departmentMembersCount(string $department_id) // Số lượng nhân viên đang làm việc tại phòng ban
     {
-        $profiles = Profiles::where(['department_id' => $department_id, 'profile_status' => 1])->get();;
+        // Lấy danh sách nhân viên có profile_status khác -1
+        $profiles = Profiles::where('department_id', $department_id)
+            ->where('profile_status', '!=', -1) // Loại bỏ profile_status == -1
+            ->get();
+    
         return response()->json([
             'profiles' => $profiles,
-            'totals' => $profiles->count(),
+            'totals' => $profiles->count(), // Đếm tổng số nhân viên đủ điều kiện
         ]);
     }
     public function positionMembersCount(string $position_id) //SL nhân viên đang làm việc và nắm chức vụ hiện tại
@@ -201,8 +205,8 @@ class ProfilesController extends Controller
             "identify_num" => "required|string",
             "id_license_day" => "required|date",
             "gender" => "required|boolean",
-            "phone" => "required|string|unique:profiles,phone",
-            "email" => "nullable|string|unique:profiles,email",
+            "phone" => "required|string",
+            "email" => "nullable|string",
             "birthday" => "required|date",
             "password" => "required|string",
             "marriage" => "required|boolean",
@@ -212,8 +216,8 @@ class ProfilesController extends Controller
             "place_of_birth" => "required|string",
             "role_id" => "required|integer",
             "profile_image" => "nullable|string",
-            "start_time" => "nullable|datetime",
-            "end_time" => "nullable|datetime",
+            "start_time" => "nullable|date",
+            "end_time" => "nullable|date",
             //foriegn key
             "department_id" => "nullable|string",
             "position_id" => "nullable|string",
@@ -221,6 +225,36 @@ class ProfilesController extends Controller
             // "labor_contract_id" => "nullable|string",
             
         ]);
+        // Kiểm tra nếu số điện thoại đã tồn tại
+        $phoneExists = Profiles::where('phone', $fields['phone'])->exists();
+        if ($phoneExists) {
+            return response()->json([
+                "status" => false,
+                "message" => "Số điện thoại này đã tồn tại trong danh sách nhân viên."
+            ], 422);
+        }    // Kiểm tra nếu số điện thoại đã tồn tại
+        $emailExists = Profiles::where('email', $fields['email'])->exists();
+        if ($emailExists) {
+            return response()->json([
+                "status" => false,
+                "message" => "Email này đã tồn tại trong danh sách nhân viên."
+            ], 422);
+        }
+        $profileIdExists = Profiles::where('profile_id', $fields['profile_id'])->exists();
+        if ($profileIdExists) {
+            return response()->json([
+                "status" => false,
+                "message" => "Mã NV này đã tồn tại trong danh sách nhân viên."
+            ], 422);
+        }
+        $CCCDExists = Profiles::where('identify_num', $fields['identify_num'])->exists();
+        if ($CCCDExists) {
+            return response()->json([
+                "status" => false,
+                "message" => "CCCD này đã tồn tại trong danh sách nhân viên."
+            ], 422);
+        }
+     
 
         $newProfile = Profiles::create([
             'profile_id' => $fields['profile_id'],
@@ -253,7 +287,8 @@ class ProfilesController extends Controller
         return response()->json(
             [
                 'user' => $newProfile,
-                'token' => $token
+                'token' => $token,
+                "message" => "Thêm nhân viên thành công"
             ],
             201
         );
@@ -291,15 +326,58 @@ class ProfilesController extends Controller
             "place_of_birth" => "string",
             "role_id" => "integer",
             "profile_image" => "nullable|string",
-            "start_time" => "datetime",
-            "end_time" => "datetime",
-            "days_off" => "integer",
+            "start_time" => "date",
+            "end_time" => "date",
+            // "days_off" => "integer",
             //foriegn key
             "department_id" => "nullable|string",
             "position_id" => "nullable|string",
             "salary_id" => "nullable|string",
             // "labor_contract_id" => "nullable|string",
         ]);
+                // Kiểm tra số điện thoại trùng, ngoại trừ bản ghi hiện tại
+            $phoneExists = Profiles::where('phone', $input['phone'])
+            ->where('profile_id', '!=', $profiles->profile_id)
+            ->exists();
+        if ($phoneExists) {
+            return response()->json([
+                "status" => false,
+                "message" => "Số điện thoại này đã tồn tại trong danh sách nhân viên."
+            ], 422);
+        }
+
+            // Kiểm tra email trùng, ngoại trừ bản ghi hiện tại
+            $emailExists = Profiles::where('email', $input['email'])
+                ->where('profile_id', '!=', $profiles->profile_id)
+                ->exists();
+            if ($emailExists) {
+                return response()->json([
+                    "status" => false,
+                    "message" => "Email này đã tồn tại trong danh sách nhân viên."
+                ], 422);
+            }
+
+            // Kiểm tra mã NV trùng, ngoại trừ bản ghi hiện tại
+            $profileIdExists = Profiles::where('profile_id', $input['profile_id'])
+                ->where('profile_id', '!=', $profiles->profile_id)
+                ->exists();
+            if ($profileIdExists) {
+                return response()->json([
+                    "status" => false,
+                    "message" => "Mã NV này đã tồn tại trong danh sách nhân viên."
+                ], 422);
+            }
+
+            // Kiểm tra CCCD trùng, ngoại trừ bản ghi hiện tại
+            $CCCDExists = Profiles::where('identify_num', $input['identify_num'])
+                ->where('profile_id', '!=', $profiles->profile_id)
+                ->exists();
+            if ($CCCDExists) {
+                return response()->json([
+                    "status" => false,
+                    "message" => "CCCD này đã tồn tại trong danh sách nhân viên."
+                ], 422);
+            }
         $profiles->profile_id = $input['profile_id'];
         $profiles->profile_name = $input['profile_name'];
         $profiles->phone = $input['phone'];
@@ -317,7 +395,7 @@ class ProfilesController extends Controller
         $profiles->id_license_day = $input['id_license_day'];
         $profiles->start_time = $input['start_time'];
         $profiles->end_time = $input['end_time'];
-        $profiles->days_off = $input['days_off'];
+        // $profiles->days_off = $input['days_off'];
         // $profiles->password = $input['password'];
         $profiles->role_id = $input['role_id'];
         if (isset($input['profile_image'])) {
