@@ -32,14 +32,13 @@ class WorkingProcessesController extends Controller
 if ($duplicate) {
     return response()->json([
         "status" => false,
-        "message" => "workplace_name và workingprocess_content không được trùng lặp"
+        "message" => "Tên quá trình công tác và nội dung quá trình làm việc không được trùng lặp"
     ], 422);
 }
         $workingProcesses = WorkingProcesses::create($input);
         $arr = [
             "status" => true,
             "message" => "Save successful",
-            "data" => new WorkingProcessesResource($workingProcesses)
         ];
         return response()->json($arr, 201);
     }
@@ -57,12 +56,25 @@ if ($duplicate) {
     // Validate dữ liệu đầu vào
     $input = $request->validate([
         'profile_id' => "string|required",
+        'workingprocess_id' => "integer|required",
         'workingprocess_content' => "string|nullable",
         'start_time' => "date|required",
         'end_time' => "nullable|date",
         'workplace_name' => "string|required",
     ]);
-
+       // Kiểm tra workplace_name và workingprocess_content không trùng trong cùng profile_id
+       $duplicate = WorkingProcesses::where('profile_id', $input['profile_id'])
+       ->where('workplace_name', $input['workplace_name'])
+       ->where('workingprocess_content', $input['workingprocess_content'])
+       ->where('workingprocess_id', '!=', $workingProcesses->workingprocess_id)
+       ->first();
+   
+   if ($duplicate) {
+       return response()->json([
+           "status" => false,
+           "message" => "Tên quá trình công tác và nội dung quá trình làm việc không được trùng lặp"
+       ], 422);
+   }
     // Cập nhật các trường trong bản ghi
     $workingProcesses->workingprocess_id = $input['workingprocess_id'];
     $workingProcesses->workplace_name = $input['workplace_name'];
