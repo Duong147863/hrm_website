@@ -85,6 +85,7 @@ Route::middleware(['auth:sanctum'])->group(function () {
     Route::controller(AbsentsController::class)->group(function () {
         Route::get('/v1/absents/{profile_id}', 'showAbsentOfProfile');
         Route::get('/v1/absents', 'index');
+        Route::get('/v1/absents/show/{id}', 'show');
         Route::get('/v1/absents/attendanceStatistics', 'attendanceStatistics');
         Route::put('/v1/absent/update', 'update');
         Route::post('/v1/absent/create', 'createNewAbsentRequest');
@@ -92,11 +93,12 @@ Route::middleware(['auth:sanctum'])->group(function () {
     });
     //
     Route::controller(TimekeepingsController::class)->group(function () {
-        Route::get('/v1/all', '');
-        Route::get('/v1/all/{id}', 'showByProfileID');
-        Route::get('/v1/late', '');
+        Route::get('/v1/checkin/all', 'index');
+        Route::get('/v1/checkin/profile', 'getCheckinHistoryOf');
+        Route::get('/v1/hours/weekly/profile/{id}', 'getWeeklyWorkingHoursOf');
+        Route::get('/v1/late-employees', 'getLateList');
         Route::post('/v1/checkin', 'checkIn');
-        Route::put('/v1/checkout/{id}', 'checkOut');
+        Route::put('/v1/update/{id}', 'checkOut');
     });
     //
     Route::controller(RolesController::class)->group(function () {

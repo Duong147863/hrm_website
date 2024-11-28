@@ -5,52 +5,123 @@ namespace App\Http\Controllers;
 use Illuminate\Routing\Controller;
 use App\Models\Timekeepings;
 use Carbon\Carbon;
-use DateTime;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 
 class TimekeepingsController extends Controller
 {
-    public function show()
+    public function index(Request $request)
     {
-        return DB::table('timekeepings')
-            ->join('profiles', 'timekeepings.profile_id', '=', 'profiles.profile_id')
-            ->join('shifts', '')
-            ->select(
-                'profiles.profile_id',
-                'profiles.profile_name',
-                'shifts.shift_name'
-            )
+        $from = $request->query('from');
+        $to = $request->query('to');
+        $checkin = Timekeepings::whereBetween('date', [$from, $to])
             ->get();
+
+        return response()->json(
+            $checkin
+        );
     }
-    public function showByProfileID(string $profile_id)
+    // Thống kê số giờ làm việc theo tháng
+    public function monthlyStatistics()
     {
-        return Timekeepings::where('profile_id', $profile_id)->get();
+        $monthlyData = DB::table('timekeepings')
+            ->selectRaw('MONTH(checkin) AS month, YEAR(checkin) AS year, SUM(hours_worked) AS total_hours')
+            ->groupByRaw('YEAR(checkin), MONTH(checkin)')
+            ->orderByRaw('YEAR(checkin) DESC, MONTH(checkin) DESC')
+            ->get();
+
+        return response()->json($monthlyData);
     }
-    public function getTimeKeepingsList()
+    public function getWeeklyWorkingHoursOf(Request $request, $profile_id)
     {
-        return DB::table('timekeepings')
+        // Lấy khoảng thời gian từ request
+        $startDate = $request->query('from'); // Ngày bắt đầu
+        $endDate = $request->query('to');     // Ngày kết thúc
+        // Lấy dữ liệu chấm công của nhân viên
+        $attendances = Timekeepings::where('profile_id', $profile_id)
+            ->whereBetween('date', [$startDate, $endDate]) // Lọc theo khoảng thời gian
+            ->select('date', 'checkin', 'checkout')
+            ->get();
+        // Kiểm tra tham số hợp lệ
+        if (!$startDate || !$endDate) {
+            return response()->json([
+                'message' => 'Vui lòng cung cấp start_date và end_date'
+            ], 400);
+        }
+        // Tính toán số giờ làm việc mỗi ngày
+        $workHours = $attendances->map(function ($attendance) {
+            $checkin = Carbon::parse($attendance->checkin);
+            $checkout = Carbon::parse($attendance->checkout);
+            $date = Carbon::parse($attendance->date);
+            // Tính số giờ làm việc
+            $hoursWorked = $checkout->diffInHours($checkin);
+
+            return [
+                'day_of_week' => $date->dayName, // Lấy tên thứ trong tuần
+                'date' => $attendance->date,
+                'hours_worked' => $hoursWorked,
+            ];
+        });
+        return response()->json($workHours);
+    }
+
+    public function getCheckinHistoryOf(Request $request)
+    {
+        $from = $request->query('from');
+        $to = $request->query('to');
+        $profile_id = $request->query('profile_id');
+
+        $checkin = Timekeepings::whereBetween('date', [$from, $to])
+            ->where('profile_id',  $profile_id)
+            ->whereNotNull('checkout')
+            ->get();
+        return response()->json(
+            $checkin
+        );
+    }
+    public function getLateList(Request $request)
+    {
+        $from = $request->query('from');
+        $to = $request->query('to');
+        // Lấy danh sách nhân viên đi trễ từ lúc ? đến lúc ?
+        $lateEmployees = Timekeepings::whereBetween('date', [$from, $to])
             ->join('profiles', 'timekeepings.profile_id', '=', 'profiles.profile_id')
-            ->join('shifts', 'timekeepings.shift_id', '=', 'shifts.shift_id')
-            ->select(
-                'timekeepings.*',
-                'profiles.profile_name',
-                'shifts.shift_name',
-            )->get();
+            ->where('profiles.gender', 1) // nếu là Nữ
+            ->where('late',  '>', '01:15:00') // đi trễ trên 60p
+            ->orWhere('profiles.gender', 0) // nếu là Nam
+            ->where('late',  '>', '00:30:00') // đi trễ trên 30p
+            ->get(['profiles.profile_id', 'profiles.profile_name', 'timekeepings.checkin', 'timekeepings.late']);
+        return response()->json(
+            [
+                "total" => $lateEmployees->count(),
+                "lateEmployees" => $lateEmployees
+            ]
+        );
     }
-    public function getLateList(DateTime $start_date)
+
+    public function getWorkingHours(Request $request)
     {
-        return DB::table('timekeepings')
-            ->join('profiles', 'timekeepings.profile_id', '=', 'profiles.profile_id')
-            ->join('shifts', 'timekeepings.shift_id', '=', 'shifts.shift_id')
-            ->select(
-                'timekeepings.*',
-                'profiles.profile_name',
-                'shifts.shift_name',
-            )->where(['timekeepings.late', '!=', null])
-            ->get()
-        ;
+        $startDate = $request->input('start_date'); // Ngày bắt đầu
+        $endDate = $request->input('end_date'); // Ngày kết thúc
+
+        $attendances = Timekeepings::where('profile_id', $request->profile_id)
+            ->whereBetween('date', [$startDate, $endDate])
+            ->get();
+
+        $result = $attendances->map(function ($attendance) {
+            $checkIn = strtotime($attendance->checkin);
+            $checkOut = $attendance->checkout ? strtotime($attendance->checkout) : $checkIn;
+            $hoursWorked = ($checkOut - $checkIn) / 3600;
+
+            return [
+                'date' => $attendance->date,
+                'hours_worked' => $hoursWorked,
+            ];
+        });
+
+        return response()->json($result);
     }
+
     public function checkIn(Request $request)
     {
         // Kiểm tra xem đã check-in chưa
@@ -90,29 +161,23 @@ class TimekeepingsController extends Controller
             return response()->json(["Check in success"], 201);
         }
     }
-    // public function checkOut(Request $request)
-    // {
-    //     $checkOut = Timekeepings::find($request->timekeeping_id);
-    //     // Kiểm tra xem đã check-in nhưng chưa check-out
-    //     $checkOut = Timekeepings::where('profile_id', $request->profile_id)
-    //         ->whereDate('date', now()->toDateString())
-    //         ->where('status', 0)
-    //         ->whereNull('checkout')
-    //         ->first();
+    public function update(Request $request)
+    {
+        $checkOut = Timekeepings::find($request->timekeeping_id);
 
-    //     $input = $request->validate([
-    //         'checkout' => "required|time",
-    //         'leaving_soon' => "nullable|time",
-    //         'status' => 'required|integer'
-    //     ]);
-    //     $checkOut->timekeeping_id = $input['timekeeping_id'];
-    //     $checkOut->profile_id = $input['profile_id'];
-    //     $checkOut->shift_id = $input['shift_id'];
-    //     $checkOut->checkout = $input['checkout'];
-    //     $checkOut->shift_id = $input['shift_id'];
-    //     $checkOut->date = $input['date'];
-    //     $checkOut->status = $input['status'];
-    //     $checkOut->save();
-    //     return response()->json([], 200);
-    // }
+        $input = $request->validate([
+            'checkout' => "required|time",
+            'leaving_soon' => "nullable|time",
+            'status' => 'required|integer'
+        ]);
+        $checkOut->timekeeping_id = $input['timekeeping_id'];
+        $checkOut->profile_id = $input['profile_id'];
+        $checkOut->shift_id = $input['shift_id'];
+        $checkOut->checkout = $input['checkout'];
+        $checkOut->shift_id = $input['shift_id'];
+        $checkOut->date = $input['date'];
+        $checkOut->status = $input['status'];
+        $checkOut->save();
+        return response()->json([], 200);
+    }
 }
