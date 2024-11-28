@@ -11,6 +11,7 @@ class Absents extends Model
     protected $primaryKey = "ID";
     protected $keyType = "integer";
     protected $fillable = [
+        "ID",
         "from",
         "reason",
         "to",
@@ -20,6 +21,7 @@ class Absents extends Model
     ];
     public $timestamps = false;
     protected $casts = [
+        "ID" => "integer",
         "from" => "date",
         "to" => 'date',
         "reason" => "string",
