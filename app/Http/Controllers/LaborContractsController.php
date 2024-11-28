@@ -16,7 +16,47 @@ class LaborContractsController extends Controller
         $laborcontracts = Laborcontracts::all();
         return response()->json($laborcontracts);
     }
+    public function getSecondContractEndTime(Request $request)
+{
+    $fields = $request->validate([
+        "profile_id" => "required|string",
+    ]);
 
+    // Lấy thông tin Profile
+    $profile = Profiles::find($fields['profile_id']);
+    if (!$profile) {
+        return response()->json([
+            "status" => false,
+            "message" => "Profile không tồn tại.",
+        ], 404);
+    }
+
+    // Kiểm tra status của Profile
+    if ($profile->profile_status != 2) {
+        return response()->json([
+            "status" => false,
+            "message" => "Profile không ở trạng thái ký hợp đồng lần 2.",
+        ], 400);
+    }
+
+    // Lấy hợp đồng lần 2 (profile_status = 2)
+    $secondContract = LaborContracts::where('profile_id', $fields['profile_id'])
+        ->orderBy('start_time', 'asc') // Giả định hợp đồng được sắp xếp theo ngày bắt đầu
+        ->skip(1) // Bỏ qua hợp đồng đầu tiên (hợp đồng thứ nhất)
+        ->first();
+
+    if (!$secondContract) {
+        return response()->json([
+            "status" => false,
+            "message" => "Không tìm thấy hợp đồng lần 2.",
+        ], 404);
+    }
+
+    return response()->json([
+        "status" => true,
+        "end_time" => $secondContract->end_time,
+    ], 200);
+}
     public function getLaborContactsOfProfile(string $profile_id)
     {
         return Laborcontracts::where('profile_id', $profile_id)->get();
@@ -25,26 +65,6 @@ class LaborContractsController extends Controller
     {
         return Laborcontracts::where('labor_contract_id', $laborContractId)->get();
     }
-    // public function showLaborContractDetails(string $profile_id)
-    // {
-    //     return DB::table('labor_contract')
-    //         ->join('profiles', 'profile_id', '=', 'profiles.profile_id')
-    //         ->select(
-    //             'labor_contract.*',
-    //             "profiles.profile_name",
-    //             "profiles.birthday",
-    //             "profiles.identify_num",
-    //             "profiles.id_license_day",
-    //             "profiles.gender",
-    //             "profiles.phone",
-    //             "profiles.current_address",
-    //         )
-    //         ->where([
-    //             ['profiles.profile_id' => $profile_id],
-    //             ['labor_contract.profile_id' => 'profiles.profile_id']
-    //         ])
-    //         ->get();
-    // }
     
     public function createNewLaborContract(Request $request)
     {

@@ -173,6 +173,7 @@ Route::middleware(['auth:sanctum'])->group(function () {
         Route::post('/v1/contract/create', 'createNewLaborContract');
         Route::put('v1/contract/update', 'update');
         Route::delete('/v1/contract/delete/{id}', 'delete');
+        Route::post('/v1/contract/get-second-contract-end-time', 'getSecondContractEndTime');
     });
     Route::controller(HiringsController::class)->group(function () {
         Route::get('/v1/hirings', 'index');
