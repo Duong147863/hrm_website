@@ -7,7 +7,9 @@ use Illuminate\Routing\Controller;
 use App\Models\TrainingProcesses;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Validator;
-
+use App\Models\Profiles;
+use App\Http\Controllers\ProfilesController;
+use Carbon\Carbon;
 class TrainingProcessesController extends Controller
 {
     public function showTrainingProcessesOfProfile(string $profile_id)
@@ -23,23 +25,22 @@ class TrainingProcessesController extends Controller
             'start_time' => "required|date",
             'end_time' => "nullable|date",
         ]);
-                   // Kiểm tra workplace_name và workingprocess_content không trùng trong cùng profile_id
-    $duplicate = TrainingProcesses::where('profile_id', $input['profile_id'])
-    ->where('trainingprocesses_name', $input['trainingprocesses_name'])
-    ->where('trainingprocesses_content', $input['trainingprocesses_content'])
-    ->first();
+                    // Kiểm tra workplace_name và workingprocess_content không trùng trong cùng profile_id
+                    $duplicate = TrainingProcesses::where('profile_id', $input['profile_id'])
+                    ->where('trainingprocesses_name', $input['trainingprocesses_name'])
+                    ->where('trainingprocesses_content', $input['trainingprocesses_content'])
+                    ->first();
 
-if ($duplicate) {
-    return response()->json([
-        "status" => false,
-        "message" => "trainingprocesses_name và trainingprocesses_content không được trùng lặp"
-    ], 422);
-}
+                if ($duplicate) {
+                    return response()->json([
+                        "status" => false,
+                        "message" => "Tên đào tạo và Nội dung đào tạo không được trùng lặp"
+                    ], 422);
+                }            
         $trainingProcesses = TrainingProcesses::create($input);
         $arr = [
             "status" => true,
-            "message" => "Save successful",
-            "data" => new TrainingProcessesResource($trainingProcesses)
+            "message" => "Thêm đào tạo thành công",
         ];
         return response()->json($arr, 201);
     }
@@ -55,11 +56,26 @@ if ($duplicate) {
     }
         $input = $request->validate([
             'profile_id' => "required|string",
+            'trainingprocesses_id' => "required|integer",
             'trainingprocesses_name' => "required|string",
             'trainingprocesses_content' => "required|string",
             'start_time' => "required|date",
             'end_time' => "nullable|date",
         ]);
+        // Kiểm tra workplace_name và workingprocess_content không trùng trong cùng profile_id
+        $duplicate = TrainingProcesses::where('profile_id', $input['profile_id'])
+        ->where('trainingprocesses_name', $input['trainingprocesses_name'])
+        ->where('trainingprocesses_content', $input['trainingprocesses_content'])
+        ->where('trainingprocesses_id', '!=', $trainingprocesses->trainingprocesses_id)
+        ->first();
+
+    if ($duplicate) {
+        return response()->json([
+            "status" => false,
+            "message" => "Tên đào tạo và Nội dung đào tạo không được trùng lặp"
+        ], 422);
+    }            
+    $trainingprocesses->trainingprocesses_id = $input['trainingprocesses_id'];
         $trainingprocesses->start_time = $input['start_time'];
         $trainingprocesses->end_time = $input['end_time'];
         $trainingprocesses->profile_id = $input['profile_id'];
@@ -69,7 +85,6 @@ if ($duplicate) {
         $arr = [
             "status" => true,
             "message" => "Save successful",
-            "data" => new TrainingProcessesResource($trainingprocesses)
         ];
         return response()->json($arr, 200);
     }

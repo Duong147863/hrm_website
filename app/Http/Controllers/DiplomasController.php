@@ -55,25 +55,6 @@ class DiplomasController extends Controller
           "message" => "Tên bằng cấp không được trùng lặp trong danh sách bằng cấp của nhân viên đó."
           ], 422);
           }
-            // Lấy thông tin nhân viên từ bảng Profiles
-        $employee = Profiles::find($fields['profile_id']);
-        if (!$employee) {
-        return response()->json([
-            "status" => false,
-            "message" => "Không tìm thấy nhân viên với mã nhân viên này."
-        ], 404);
-        }
-            // Kiểm tra tính tuổi của nhân viên tại thời điểm cấp bằng
-        $employeeBirthday = new \Carbon\Carbon($employee->birthday);
-        $licenseDate = new \Carbon\Carbon($fields['license_date']);
-        $ageAtGraduation = $licenseDate->diffInYears($employeeBirthday); // Tính tuổi tại thời điểm cấp bằng
-        
-        if ($ageAtGraduation < 18) {
-            return response()->json([
-                "status" => false,
-                "message" => "Nhân viên phải ít nhất 18 tuổi khi nhận bằng cấp."
-            ], 422);
-        }
 
         $newDiploma = Diplomas::create([
             'diploma_id' => ($fields['diploma_id']),
@@ -119,25 +100,7 @@ class DiplomasController extends Controller
              "message" => "Tên bằng cấp không được trùng lặp trong danh sách bằng cấp của nhân viên đó."
          ], 422);
      }
-          // Lấy thông tin nhân viên từ bảng Profiles
-      $employee = Profiles::find($input['profile_id']);
-      if (!$employee) {
-      return response()->json([
-          "status" => false,
-          "message" => "Không tìm thấy nhân viên với mã nhân viên này."
-      ], 404);
-      }
-          // Kiểm tra tính tuổi của nhân viên tại thời điểm cấp bằng
-      $employeeBirthday = new \Carbon\Carbon($employee->birthday);
-      $licenseDate = new \Carbon\Carbon($input['license_date']);
-      $ageAtGraduation = $licenseDate->diffInYears($employeeBirthday); // Tính tuổi tại thời điểm cấp bằng
-      
-      if ($ageAtGraduation < 18) {
-          return response()->json([
-              "status" => false,
-              "message" => "Nhân viên phải ít nhất 18 tuổi khi nhận bằng cấp."
-          ], 422);
-      }
+
         $diplomas->diploma_id = $input['diploma_id'];
         $diplomas->diploma_degree_name = $input['diploma_degree_name'];
         $diplomas->diploma_image = $input['diploma_image'];
@@ -152,8 +115,7 @@ class DiplomasController extends Controller
         return response()->json([
             "status" => true,
             "message" => "Cập nhật thông tin bằng cấp thành công.",
-            "data" => $diplomas
-        ], 201); 
+        ], 200); 
     }
 
     public function delete($id)
