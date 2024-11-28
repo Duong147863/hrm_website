@@ -2,7 +2,6 @@
 
 namespace App\Http\Controllers;
 
-use App\Http\Resources\LaborContractsResource;
 use Illuminate\Routing\Controller;
 use App\Models\LaborContracts;
 use Illuminate\Http\Request;
@@ -49,6 +48,8 @@ class LaborContractsController extends Controller
     
     public function createNewLaborContract(Request $request)
     {
+        $existLaborContract = LaborContracts::where('profile_id',$request->profile_id)->get();
+
         $fields = $request->validate([
             "labor_contract_id" => "required|string",
             "end_time" => "nullable|date",
