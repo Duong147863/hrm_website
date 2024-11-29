@@ -10,7 +10,8 @@ use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 use Carbon\Carbon;
 use Carbon\CarbonPeriod;
-
+use App\Models\Profiles;
+use App\Http\Controllers\ProfilesController;
 class AbsentsController extends Controller
 {
     public function index()
@@ -18,12 +19,40 @@ class AbsentsController extends Controller
         $absents = Absents::all();
         return response()->json($absents);
     }
-    public function show(string $ID)
-    {
-        return (
-            Absents::findOrFail($ID)
-        );
+    public function show($profileId)
+{
+    // Lấy thông tin người dùng đã đăng nhập (dựa trên $profileId)
+    $userProfile = DB::table('profiles')->where('profile_id', $profileId)->first();
+
+    // Kiểm tra nếu role_id của người đăng nhập là 4
+    if ($userProfile && $userProfile->role_id == 4) {
+        // Lấy tất cả đơn nghỉ của những nhân viên có role_id = 1 (không bao gồm đơn nghỉ của profileId)
+        $absents = DB::table('absents')
+            ->join('profiles', 'absents.profile_id', '=', 'profiles.profile_id')
+            ->where('profiles.role_id', 1) // Lọc nhân viên có role_id = 1
+            ->where('absents.profile_id', '<>', $profileId) // Loại trừ đơn nghỉ của chính người đăng nhập
+            ->select('absents.*') // Chỉ lấy các cột từ bảng absents
+            ->get();
+
+        // Trả về kết quả dưới dạng JSON
+        return response()->json($absents);
     }
+    
+    // Kiểm tra nếu role_id của người đăng nhập là 5
+    if ($userProfile && $userProfile->role_id == 5) {
+        // Lấy tất cả đơn nghỉ của mọi nhân viên, trừ đơn nghỉ của chính người đăng nhập
+        $absents = DB::table('absents')
+            ->where('profile_id', '<>', $profileId) // Loại trừ đơn nghỉ của chính người đăng nhập
+            ->get();
+
+        // Trả về kết quả dưới dạng JSON
+        return response()->json($absents);
+    }
+
+    // Nếu người dùng không có role_id là 4 hoặc 5, trả về thông báo lỗi
+    return response()->json(['message' => 'Access denied or invalid role'], 403);
+}
+
     public function attendanceStatistics(Request $request)
     {
         $today = now()->format('Y-m-d'); // Lấy ngày hiện tại
@@ -90,6 +119,7 @@ class AbsentsController extends Controller
             ->get();
     }
 
+
     public function createNewAbsentRequest(Request $request)
     {
         //Lấy năm hiện tại
@@ -116,10 +146,15 @@ class AbsentsController extends Controller
             ->sum('days_off');
 
         // Lấy Tổng số ngày ĐƯỢC NGHỈ PHÉP của nhân viên trong 1 năm
-        $daysOffAvailablePerYear = DB::table('profiles')
-            ->where('profile_id', $request->profile_id)
-            ->select('days_off')->get();
+      $daysOffAvailablePerYear = DB::table('profiles')
+    ->where('profile_id', $request->profile_id)
+    ->select('days_off')
+    ->first();  // Lấy bản ghi đầu tiên (nếu có)
 
+    // Kiểm tra nếu có giá trị, sau đó lấy trường 'days_off'
+    if ($daysOffAvailablePerYear) {
+        $daysOffAvailablePerYear = $daysOffAvailablePerYear->days_off;
+    }
         // Kiểm tra trùng lặp ngày đã xin nghỉ
         $existingLeave = Absents::where('profile_id', $request->profile_id)
             ->where(function ($query) use ($from, $to) {
@@ -132,7 +167,7 @@ class AbsentsController extends Controller
             })->exists();
 
         if ($existingLeave) {
-            return response()->json(['message' => 'Bạn đã xin nghỉ trong khoản tgian này rồi'], 401);
+            return response()->json(['message' => 'Bạn đã xin nghỉ trong khoản thời gian này rồi'], 401);
         }
         else if ($totalLeaveDays == $daysOffAvailablePerYear) // nếu số ngày ĐÃ NGHỈ == số ngày ĐƯỢC NGHỈ PHÉP trong 1 năm
         {
