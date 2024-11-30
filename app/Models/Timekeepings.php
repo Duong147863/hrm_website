@@ -32,24 +32,5 @@ class Timekeepings extends Model
         'date' => "date",
         'status' => 'integer'
     ];
-    // Accessor - Thay thế NULL bằng 'Không có dữ liệu' khi lấy giá trị
-    // public function getColumnNameAttribute()
-    // {
-    //     return $this->column_name ?? 'Không có dữ liệu';
-    // }
-     // Phương thức tính số giờ làm việc trong ngày
-   // Phương thức tính số giờ làm việc trong ngày
-//    public function getWorkHoursAttribute()
-//    {
-//        if ($this->checkin && $this->checkout) {
-//            // Sử dụng Carbon để tính số giờ làm việc giữa check_in và check_out
-//            $checkIn = Carbon::parse($this->checkin);
-//            $checkOut = Carbon::parse($this->checkout);
 
-//            // Tính tổng số giờ giữa check_in và check_out
-//            return $checkIn->diffInHours($checkOut);
-//        }
-
-//        return 0; // Nếu không có giờ vào hoặc giờ ra thì trả về 0
-//    }
 }
