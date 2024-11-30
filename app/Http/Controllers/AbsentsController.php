@@ -201,24 +201,80 @@ class AbsentsController extends Controller
     public function update(Request $request)
     {
         $absents = Absents::find($request->ID);
+
+        //Lấy năm hiện tại
+        $currentYear = Carbon::now()->year;
+        // Kiểm tra dữ liệu đưa vào
         $input = $request->validate([
-            "ID" => "required|integer",
-            "from" => "required|date",
-            "to" => 'nullable|date',
+            // Xác thực ngày từ bắt buộc phải là ngày từ hiện tại đến tương lai nhưng bắt buộc năm phải là năm hiện tại, không cho phép ngày quá khứ
+            'from' => 'required|date|after:' . $currentYear . '-01-01|before_or_equal:' . '31-12-' . $currentYear,
+            // Xác thực ngày đến, có thể là null, bắt buộc phải là ngày từ hiện tại đến tương lai nhưng bắt buộc phải là năm hiện tại, không cho phép ngày quá khứ
+            'to' => 'nullable|date|after_or_equal:from|before_or_equal:' . '31-12-' . $currentYear,
             "reason" => "nullable|string",
             "profile_id" => "required|string",
-            "days_off" => "nullable|numeric",
+            "days_off" => "nullable|integer",
             "status" => "required|integer",
         ]);
-        $absents->ID = $input['ID'];
-        $absents->from = $input['from'];
-        $absents->to = $input['to'];
-        $absents->reason = $input['reason'];
-        $absents->profile_id = $input['profile_id'];
-        $absents->days_off = $input['days_off'];
-        $absents->status = $input['status'];
-        $absents->save();
-        return response()->json([], 200);
+
+        $from = Carbon::parse($request->from);
+        $to = $request->to != null ? Carbon::parse($request->to) : null; // Chỉ xử lý `to` nếu nó tồn tại
+
+        // Tổng số ngày nghỉ ĐÃ NGHỈ trong năm
+        $totalLeaveDays = DB::table('absents')
+            ->where('profile_id', $request->profile_id) // Lọc theo user
+            ->whereYear('from', $request->from) // Lọc theo năm
+            ->sum('days_off');
+
+        // Lấy Tổng số ngày ĐƯỢC NGHỈ PHÉP của nhân viên trong 1 năm
+        $daysOffAvailablePerYear = DB::table('profiles')
+            ->where('profile_id', $request->profile_id)
+            ->value('days_off'); // Dùng value lấy giá trị trực tiếp của cột
+
+        //Kiểm tra trùng đã nghỉ
+        $existingLeave = Absents::where('profile_id', $request->profile_id)
+            ->where(function ($query) use ($from, $to) {
+                // Nếu `to` không null, kiểm tra khoảng thời gian
+                if ($to) {
+                    $query->where(function ($q) use ($from, $to) {
+                        $q->where('from', '<=', $to)
+                            ->where('to', '>=', $from); // Giao nhau giữa khoảng thời gian
+                    });
+                } else {
+                    // Nếu chỉ có `from`, kiểm tra ngày `from` trùng 1 ngày
+                    $query->where(function ($q) use ($from) {
+                        $q->where(function ($subQuery) use ($from) {
+                            // Kiểm tra bản ghi 1 ngày duy nhất trong CSDL
+                            $subQuery->whereColumn('from', 'to')
+                                ->where('from', '=', $from);
+                        })->orWhere(function ($subQuery) use ($from) {
+                            // Kiểm tra ngày `from` nằm trong khoảng thời gian
+                            $subQuery->where('from', '<=', $from)
+                                ->where('to', '>=', $from);
+                        });
+                    });
+                }
+            })->exists();
+
+
+        if ($existingLeave) {
+            return response()->json(['message' => 'Bạn đã xin nghỉ trong khoảng thời gian này rồi'], 401);
+        }
+        // Kiểm tra nếu số ngày nghỉ phép yêu cầu vượt quá giới hạn
+        $requestedDaysOff = $input['days_off'];
+        if ($totalLeaveDays + $requestedDaysOff > $daysOffAvailablePerYear) // nếu số ngày ĐÃ NGHỈ == số ngày ĐƯỢC NGHỈ PHÉP trong 1 năm
+        {
+            return response()->json(['message' => 'Số ngày nghỉ phép của bạn không đủ'], 400);
+        } else {
+            $absents->ID = $input['ID'];
+            $absents->from = $input['from'];
+            $absents->to = $input['to'];
+            $absents->reason = $input['reason'];
+            $absents->profile_id = $input['profile_id'];
+            $absents->days_off = $input['days_off'];
+            $absents->status = $input['status'];
+            $absents->save();
+            return response()->json([], 200);
+        }
     }
     public function delete(int $ID)
     {
