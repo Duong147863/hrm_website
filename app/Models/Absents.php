@@ -26,7 +26,7 @@ class Absents extends Model
         "to" => 'date',
         "reason" => "string",
         "profile_id" => "string",
-        "days_off" => "double",
+        "days_off" => "integer",
         "status" => "integer",
     ];
 }
