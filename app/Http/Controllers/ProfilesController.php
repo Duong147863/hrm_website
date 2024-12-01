@@ -7,7 +7,10 @@ use App\Models\Profiles;
 use Illuminate\Routing\Controller;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Hash;
-use Carbon\Carbon;
+use Illuminate\Support\Facades\Cache;
+use Illuminate\Support\Facades\Mail;
+use Illuminate\Support\Str;
+
 class ProfilesController extends Controller
 {   
     public function getCurrentUser(Request $request)
@@ -45,7 +48,7 @@ class ProfilesController extends Controller
         $profiles = Profiles::where('department_id', $department_id)
             ->where('profile_status', '!=', -1) // Loại bỏ profile_status == -1
             ->get();
-    
+
         return response()->json([
             'profiles' => $profiles,
             'totals' => $profiles->count(), // Đếm tổng số nhân viên đủ điều kiện
@@ -71,10 +74,10 @@ class ProfilesController extends Controller
     {
         // Lấy tất cả nhân viên đã nghỉ việc (profile_status = -1)
         $quitProfiles = Profiles::where('profile_status', -1)
-        ->get();
+            ->get();
 
         // Lấy tất cả nhân viên đang làm việc (profile_status = 1)
-        $activeProfiles = Profiles::where('profile_status', "!=",-1)->get();
+        $activeProfiles = Profiles::where('profile_status', "!=", -1)->get();
 
         $officialContractsCount = DB::table('profiles')
             ->join('labor_contract', 'profiles.labor_contract_id', '=', 'labor_contract.labor_contract_id')
@@ -152,7 +155,7 @@ class ProfilesController extends Controller
         ]);
 
         //Check email
-        $user = Profiles::where("email" ,"=", $fields['email'])->where("profile_status", "!=", -1)->first();
+        $user = Profiles::where("email", "=", $fields['email'])->where("profile_status", "!=", -1)->first();
 
         //Check password
         if (!$user || !Hash::check($fields['password'], $user->password)) {
@@ -187,7 +190,7 @@ class ProfilesController extends Controller
         ]);
 
         //Check phone
-        $user = Profiles::where("phone" ,"=", $fields['phone'])->where("profile_status", "!=", -1)
+        $user = Profiles::where("phone", "=", $fields['phone'])->where("profile_status", "!=", -1)
             ->first();
         //Check password
         if (!$user || !Hash::check($fields['password'], $user->password)) {
@@ -242,7 +245,7 @@ class ProfilesController extends Controller
             "position_id" => "nullable|string",
             "salary_id" => "nullable|string",
             // "labor_contract_id" => "nullable|string",
-            
+
         ]);
         // Kiểm tra nếu số điện thoại đã tồn tại
         $phoneExists = Profiles::where('phone', $fields['phone'])->exists();
@@ -273,7 +276,7 @@ class ProfilesController extends Controller
                 "message" => "CCCD này đã tồn tại trong danh sách nhân viên."
             ], 422);
         }
-     
+
 
         $newProfile = Profiles::create([
             'profile_id' => $fields['profile_id'],
@@ -354,8 +357,8 @@ class ProfilesController extends Controller
             "salary_id" => "nullable|string",
             // "labor_contract_id" => "nullable|string",
         ]);
-                // Kiểm tra số điện thoại trùng, ngoại trừ bản ghi hiện tại
-            $phoneExists = Profiles::where('phone', $input['phone'])
+        // Kiểm tra số điện thoại trùng, ngoại trừ bản ghi hiện tại
+        $phoneExists = Profiles::where('phone', $input['phone'])
             ->where('profile_id', '!=', $profiles->profile_id)
             ->exists();
         if ($phoneExists) {
@@ -365,38 +368,38 @@ class ProfilesController extends Controller
             ], 422);
         }
 
-            // Kiểm tra email trùng, ngoại trừ bản ghi hiện tại
-            $emailExists = Profiles::where('email', $input['email'])
-                ->where('profile_id', '!=', $profiles->profile_id)
-                ->exists();
-            if ($emailExists) {
-                return response()->json([
-                    "status" => false,
-                    "message" => "Email này đã tồn tại trong danh sách nhân viên."
-                ], 422);
-            }
+        // Kiểm tra email trùng, ngoại trừ bản ghi hiện tại
+        $emailExists = Profiles::where('email', $input['email'])
+            ->where('profile_id', '!=', $profiles->profile_id)
+            ->exists();
+        if ($emailExists) {
+            return response()->json([
+                "status" => false,
+                "message" => "Email này đã tồn tại trong danh sách nhân viên."
+            ], 422);
+        }
 
-            // Kiểm tra mã NV trùng, ngoại trừ bản ghi hiện tại
-            $profileIdExists = Profiles::where('profile_id', $input['profile_id'])
-                ->where('profile_id', '!=', $profiles->profile_id)
-                ->exists();
-            if ($profileIdExists) {
-                return response()->json([
-                    "status" => false,
-                    "message" => "Mã NV này đã tồn tại trong danh sách nhân viên."
-                ], 422);
-            }
+        // Kiểm tra mã NV trùng, ngoại trừ bản ghi hiện tại
+        $profileIdExists = Profiles::where('profile_id', $input['profile_id'])
+            ->where('profile_id', '!=', $profiles->profile_id)
+            ->exists();
+        if ($profileIdExists) {
+            return response()->json([
+                "status" => false,
+                "message" => "Mã NV này đã tồn tại trong danh sách nhân viên."
+            ], 422);
+        }
 
-            // Kiểm tra CCCD trùng, ngoại trừ bản ghi hiện tại
-            $CCCDExists = Profiles::where('identify_num', $input['identify_num'])
-                ->where('profile_id', '!=', $profiles->profile_id)
-                ->exists();
-            if ($CCCDExists) {
-                return response()->json([
-                    "status" => false,
-                    "message" => "CCCD này đã tồn tại trong danh sách nhân viên."
-                ], 422);
-            }
+        // Kiểm tra CCCD trùng, ngoại trừ bản ghi hiện tại
+        $CCCDExists = Profiles::where('identify_num', $input['identify_num'])
+            ->where('profile_id', '!=', $profiles->profile_id)
+            ->exists();
+        if ($CCCDExists) {
+            return response()->json([
+                "status" => false,
+                "message" => "CCCD này đã tồn tại trong danh sách nhân viên."
+            ], 422);
+        }
         $profiles->profile_id = $input['profile_id'];
         $profiles->profile_name = $input['profile_name'];
         $profiles->phone = $input['phone'];
@@ -432,7 +435,7 @@ class ProfilesController extends Controller
         $profiles->save();
         return response()->json([], 200);
     }
-    public function deactivateProfile(Request $request)//Khoá tk nếu nhân sự nghỉ việc
+    public function deactivateProfile(Request $request) //Khoá tk nếu nhân sự nghỉ việc
     {
         $profile = Profiles::find($request->profile_id);
 
@@ -469,4 +472,85 @@ class ProfilesController extends Controller
 
         return response()->json(['message' => 'Đổi mật khẩu thành công.'], 200);
     }
+
+    public function resetPassword(Request $request)
+    {
+        // Xác thực dữ liệu đầu vào
+        $request->validate([
+            'profile_id' => 'required|string',
+            'new_password' => 'required|string|confirmed', // confirmed sẽ kiểm tra trường `new_password_confirmation`
+        ]);
+
+        // Lấy người dùng hiện tại theo `profile_id`
+        $user = Profiles::find($request->profile_id);
+
+        // Kiểm tra xem hồ sơ có tồn tại và có đang bị khoá không
+        if (!$user) {
+            return response()->json(['message' => 'Profile not found'], 404);
+        } elseif ($user->profile_status == 0) {
+            return response()->json(['message' => 'Profile is inactive'], 403);
+        }
+
+        // Kiểm tra xem mật khẩu hiện tại có đúng không
+        if (!Hash::check($request->current_password, $user->password)) {
+            return response()->json(['message' => 'Mật khẩu hiện tại không đúng.'], 422);
+        }
+
+        // Cập nhật mật khẩu mới
+        $user->password = bcrypt($request->new_password);
+        $user->save();
+
+        return response()->json(['message' => 'Đổi mật khẩu thành công.'], 200);
+    }
+
+    //     public function forgotPassword(Request $request)
+    //     {
+    //         $request->validate([
+    //             'email' => 'required|email|exists:profiles,email',
+    //         ]);
+
+    //         $email = $request->email;
+
+    //         // Tạo token và lưu cache
+    //         $token = Str::random(64);
+    //         Cache::put("password_reset_$email", $token, 3600); // Lưu token 1 giờ
+
+    //         // Gửi email với token
+    //         $url = url("/reset-password?token=$token&email=$email");
+    //         Mail::raw("Reset your password using the following link: $url", function ($message) use ($email) {
+    //             $message->to($email)
+    //                 ->subject('Reset Password');
+    //         });
+
+    //         return response()->json(['message' => 'Password reset link sent']);
+    //     }
+
+    //     public function resetPassword(Request $request)
+    // {
+    //     $request->validate([
+    //         'email' => 'required|email|exists:profiles,email',
+    //         'token' => 'required',
+    //         'password' => 'required|confirmed',
+    //     ]);
+
+    //     $email = $request->email;
+    //     $token = $request->token;
+
+    //     // Lấy token từ cache
+    //     $cachedToken = Cache::get("password_reset_$email");
+
+    //     if (!$cachedToken || $cachedToken !== $token) {
+    //         return response()->json(['message' => 'Invalid or expired token'], 401);
+    //     }
+
+    //     // Đặt lại mật khẩu
+    //     $profile = Profiles::where('email', $email)->first();
+    //     $profile->password = Hash::make($request->password);
+    //     $profile->save();
+
+    //     // Xóa token khỏi cache
+    //     Cache::forget("password_reset_$email");
+
+    //     return response()->json(['message' => 'Password reset successfully']);
+    // }
 }

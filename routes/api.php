@@ -27,6 +27,7 @@ use Illuminate\Support\Facades\Route;
 Route::controller(ProfilesController::class)->group(function () {
     Route::post('/v1/auth/login/email', 'emailLogin');
     Route::post('/v1/auth/login/phone', 'phoneNumberLogin');
+    Route::post('/v1/auth/reset-password', 'resetPassword');
 });
 
 
