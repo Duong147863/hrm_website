@@ -81,6 +81,21 @@ class TimekeepingsController extends Controller
             $checkin
         );
     }
+
+    public function getOTList(Request $request)
+    {
+        $from = $request->query('from');
+        $to = $request->query('to');
+
+        $checkin = Timekeepings::whereBetween('date', [$from, $to])
+            ->get()->filter(function ($timeSheet) {
+                $dayOfWeek = date('N', strtotime($timeSheet->work_date)); // 6: Thứ Bảy, 7: Chủ Nhật
+                return in_array($dayOfWeek, [6, 7]);
+            });
+        return response()->json(
+            $checkin
+        );
+    }
     public function getLateList(Request $request)
     {
         $from = $request->query('from');
@@ -94,10 +109,12 @@ class TimekeepingsController extends Controller
             ->where('late',  '>', '00:30:00') // đi trễ trên 30p
             ->get(['profiles.profile_id', 'profiles.profile_name', 'timekeepings.checkin', 'timekeepings.late']);
         return response()->json(
-            [
-                "total" => $lateEmployees->count(),
-                "lateEmployees" => $lateEmployees
-            ]
+            $lateEmployees,
+            200
+            // [
+            // "total" => $lateEmployees->count(),
+            // "lateEmployees" => $lateEmployees
+            // ]
         );
     }
 
