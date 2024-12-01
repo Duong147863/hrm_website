@@ -31,7 +31,6 @@ class HiringsController extends Controller
             "apply_for" => "required|string",
             "current_address" => "required|string",
             "nation" => "required|string",
-            "place_of_birth" => "required|string",
             "hiring_status" => "required|integer",
             "hiring_profile_image" => "required|string",
             "work_experience" => "required|string",
@@ -43,7 +42,6 @@ class HiringsController extends Controller
             'email' => ($fields['email']),
             'birthday' => ($fields['birthday']),
             'apply_for' => ($fields['apply_for']),
-            'place_of_birth' => ($fields['place_of_birth']),
             'educational_level' => ($fields['educational_level']),
             'nation' => ($fields['nation']),
             'current_address' => ($fields['current_address']),
@@ -74,7 +72,6 @@ class HiringsController extends Controller
             "apply_for" => "required|string",
             "current_address" => "required|string",
             "nation" => "required|string",
-            "place_of_birth" => "required|string",
             "hiring_status" => "required|integer",
             "hiring_profile_image" => "required|string",
             "work_experience" => "required|string",
@@ -90,14 +87,12 @@ class HiringsController extends Controller
         $hiring->nation = $input['nation'];
         $hiring->current_address = $input['current_address'];
         $hiring->profile_name = $input['profile_name'];
-        $hiring->place_of_birth = $input['place_of_birth'];
         $hiring->hiring_profile_image = $input['hiring_profile_image'];
         $hiring->work_experience = $input['work_experience'];
         $hiring->save();
         $arr = [
             "status" => true,
             "message" => "Save successful",
-            "data" => new HiringsResource($hiring)
         ];
         return response()->json($arr, 200);
     }
