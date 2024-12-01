@@ -12,26 +12,26 @@ use Illuminate\Support\Facades\Mail;
 use Illuminate\Support\Str;
 
 class ProfilesController extends Controller
-{   
-    public function getCurrentUser(Request $request)
 {
-    // Lấy thông tin người dùng hiện tại từ API Token
-    $user = $request->user(); // Đây sẽ trả về đối tượng user từ token của người dùng
+    public function getCurrentUser(Request $request)
+    {
+        // Lấy thông tin người dùng hiện tại từ API Token
+        $user = $request->user(); // Đây sẽ trả về đối tượng user từ token của người dùng
 
-    if ($user) {
-        return response()->json([
-            'user_id' => $user->profile_id,  // Trả về `profile_id` (hoặc `user_id` tùy theo cài đặt của bạn)
-            'profile_name' => $user->profile_name,  // Trả về tên người dùng
-            'email' => $user->email,  // Trả về email người dùng
-            'phone' => $user->phone,  // Trả về số điện thoại người dùng
-            // Bạn có thể trả thêm các thông tin khác của người dùng nếu cần
-        ], 200);
-    } else {
-        return response()->json([
-            'message' => 'User not authenticated'
-        ], 401); // Nếu không tìm thấy người dùng, trả về lỗi 401
+        if ($user) {
+            return response()->json([
+                'user_id' => $user->profile_id,  // Trả về `profile_id` (hoặc `user_id` tùy theo cài đặt của bạn)
+                'profile_name' => $user->profile_name,  // Trả về tên người dùng
+                'email' => $user->email,  // Trả về email người dùng
+                'phone' => $user->phone,  // Trả về số điện thoại người dùng
+                // Bạn có thể trả thêm các thông tin khác của người dùng nếu cần
+            ], 200);
+        } else {
+            return response()->json([
+                'message' => 'User not authenticated'
+            ], 401); // Nếu không tìm thấy người dùng, trả về lỗi 401
+        }
     }
-}
     public function index()
     {
         $profiles = Profiles::all();
@@ -502,55 +502,4 @@ class ProfilesController extends Controller
 
         return response()->json(['message' => 'Đổi mật khẩu thành công.'], 200);
     }
-
-    //     public function forgotPassword(Request $request)
-    //     {
-    //         $request->validate([
-    //             'email' => 'required|email|exists:profiles,email',
-    //         ]);
-
-    //         $email = $request->email;
-
-    //         // Tạo token và lưu cache
-    //         $token = Str::random(64);
-    //         Cache::put("password_reset_$email", $token, 3600); // Lưu token 1 giờ
-
-    //         // Gửi email với token
-    //         $url = url("/reset-password?token=$token&email=$email");
-    //         Mail::raw("Reset your password using the following link: $url", function ($message) use ($email) {
-    //             $message->to($email)
-    //                 ->subject('Reset Password');
-    //         });
-
-    //         return response()->json(['message' => 'Password reset link sent']);
-    //     }
-
-    //     public function resetPassword(Request $request)
-    // {
-    //     $request->validate([
-    //         'email' => 'required|email|exists:profiles,email',
-    //         'token' => 'required',
-    //         'password' => 'required|confirmed',
-    //     ]);
-
-    //     $email = $request->email;
-    //     $token = $request->token;
-
-    //     // Lấy token từ cache
-    //     $cachedToken = Cache::get("password_reset_$email");
-
-    //     if (!$cachedToken || $cachedToken !== $token) {
-    //         return response()->json(['message' => 'Invalid or expired token'], 401);
-    //     }
-
-    //     // Đặt lại mật khẩu
-    //     $profile = Profiles::where('email', $email)->first();
-    //     $profile->password = Hash::make($request->password);
-    //     $profile->save();
-
-    //     // Xóa token khỏi cache
-    //     Cache::forget("password_reset_$email");
-
-    //     return response()->json(['message' => 'Password reset successfully']);
-    // }
 }
