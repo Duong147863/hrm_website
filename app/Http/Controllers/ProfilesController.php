@@ -9,7 +9,26 @@ use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Hash;
 use Carbon\Carbon;
 class ProfilesController extends Controller
+{   
+    public function getCurrentUser(Request $request)
 {
+    // Lấy thông tin người dùng hiện tại từ API Token
+    $user = $request->user(); // Đây sẽ trả về đối tượng user từ token của người dùng
+
+    if ($user) {
+        return response()->json([
+            'user_id' => $user->profile_id,  // Trả về `profile_id` (hoặc `user_id` tùy theo cài đặt của bạn)
+            'profile_name' => $user->profile_name,  // Trả về tên người dùng
+            'email' => $user->email,  // Trả về email người dùng
+            'phone' => $user->phone,  // Trả về số điện thoại người dùng
+            // Bạn có thể trả thêm các thông tin khác của người dùng nếu cần
+        ], 200);
+    } else {
+        return response()->json([
+            'message' => 'User not authenticated'
+        ], 401); // Nếu không tìm thấy người dùng, trả về lỗi 401
+    }
+}
     public function index()
     {
         $profiles = Profiles::all();
@@ -438,12 +457,6 @@ class ProfilesController extends Controller
         // Lấy người dùng hiện tại theo `profile_id`
         $user = Profiles::find($request->profile_id);
 
-        // Kiểm tra xem hồ sơ có tồn tại và có đang bị khoá không
-        if (!$user) {
-            return response()->json(['message' => 'Profile not found'], 404);
-        } elseif ($user->profile_status == 0) {
-            return response()->json(['message' => 'Profile is inactive'], 403);
-        }
 
         // Kiểm tra xem mật khẩu hiện tại có đúng không
         if (!Hash::check($request->current_password, $user->password)) {
