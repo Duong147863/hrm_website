@@ -53,7 +53,7 @@ class HiringsController extends Controller
     }
 
     public function update(Request $request)
-    {   
+    {
         $hiring = Hirings::find($request->hiring_profile_id);
         // Kiểm tra xem relative có tồn tại không
         if (!$hiring) {
@@ -91,7 +91,6 @@ class HiringsController extends Controller
         $hiring->work_experience = $input['work_experience'];
         $hiring->save();
         $arr = [
-            "status" => true,
             "message" => "Save successful",
         ];
         return response()->json($arr, 200);

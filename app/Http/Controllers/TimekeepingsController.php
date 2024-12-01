@@ -34,12 +34,14 @@ class TimekeepingsController extends Controller
     }
     public function getWeeklyWorkingHoursOf(Request $request, $profile_id)
     {
+
         // Lấy khoảng thời gian từ request
         $startDate = $request->query('from'); // Ngày bắt đầu
         $endDate = $request->query('to');     // Ngày kết thúc
         // Lấy dữ liệu chấm công của nhân viên
         $attendances = Timekeepings::where('profile_id', $profile_id)
             ->whereBetween('date', [$startDate, $endDate]) // Lọc theo khoảng thời gian
+            ->whereNotNull('checkout')
             ->select('date', 'checkin', 'checkout')
             ->get();
         // Kiểm tra tham số hợp lệ
@@ -73,7 +75,7 @@ class TimekeepingsController extends Controller
 
         $checkin = Timekeepings::whereBetween('date', [$from, $to])
             ->where('profile_id',  $profile_id)
-            ->whereNotNull('checkout')
+            // ->whereNotNull('checkout')
             ->get();
         return response()->json(
             $checkin

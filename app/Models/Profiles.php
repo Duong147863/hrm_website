@@ -2,6 +2,7 @@
 
 namespace App\Models;
 
+use App\Notifications\ResetPasswordNotification;
 use Illuminate\Support\Facades\Gate;
 use Illuminate\Foundation\Auth\User as Authenticatable;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
@@ -36,7 +37,7 @@ class Profiles extends Authenticatable
         "profile_image",
         "start_time",
         "end_time",
-        // "days_off",     //ngày được nghỉ phép
+        "days_off",     //ngày được nghỉ phép
         //foriegn key
         "department_id",
         "position_id",
@@ -68,7 +69,7 @@ class Profiles extends Authenticatable
         "place_of_birth" => "string",
         "start_time" => "date",
         "end_time" => "date",
-        // "days_off" => "integer",
+        "days_off" => "integer",
         //foriegn key
         "department_id" => "string",
         "position_id" => "string",
@@ -92,5 +93,9 @@ class Profiles extends Authenticatable
             }
         }
         return false;
+    }
+    public function sendPasswordResetNotification($token)
+    {
+        $this->notify(new ResetPasswordNotification($token));
     }
 }
