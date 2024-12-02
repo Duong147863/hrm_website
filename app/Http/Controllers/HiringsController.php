@@ -76,6 +76,7 @@ class HiringsController extends Controller
             "hiring_profile_image" => "required|string",
             "work_experience" => "required|string",
         ]);
+        $hiring->hiring_status = $input['hiring_status'];
         $hiring->hiring_profile_id = $input['hiring_profile_id'];
         $hiring->educational_level = $input['educational_level'];
         $hiring->profile_name = $input['profile_name'];
