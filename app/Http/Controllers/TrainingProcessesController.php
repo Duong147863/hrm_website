@@ -49,11 +49,11 @@ class TrainingProcessesController extends Controller
     {
         $trainingprocesses = TrainingProcesses::find($request->trainingprocesses_id);
           // Kiểm tra xem relative có tồn tại không
-    if (!$trainingprocesses) {
-        return response()->json([
-            'message' => 'Trainingprocesses not found'
-        ], 404);  // Trả về lỗi 404 nếu không tìm thấy relative
-    }
+        if (!$trainingprocesses) {
+            return response()->json([
+                'message' => 'Trainingprocesses not found'
+            ], 404);  // Trả về lỗi 404 nếu không tìm thấy relative
+        }
         $input = $request->validate([
             'profile_id' => "required|string",
             'trainingprocesses_id' => "required|integer",
@@ -75,7 +75,7 @@ class TrainingProcessesController extends Controller
             "message" => "Tên đào tạo và Nội dung đào tạo không được trùng lặp"
         ], 422);
     }            
-    $trainingprocesses->trainingprocesses_id = $input['trainingprocesses_id'];
+        $trainingprocesses->trainingprocesses_id = $input['trainingprocesses_id'];
         $trainingprocesses->start_time = $input['start_time'];
         $trainingprocesses->end_time = $input['end_time'];
         $trainingprocesses->profile_id = $input['profile_id'];

@@ -12,26 +12,7 @@ use Illuminate\Support\Facades\Mail;
 use Illuminate\Support\Str;
 
 class ProfilesController extends Controller
-{
-    public function getCurrentUser(Request $request)
-    {
-        // Lấy thông tin người dùng hiện tại từ API Token
-        $user = $request->user(); // Đây sẽ trả về đối tượng user từ token của người dùng
-
-        if ($user) {
-            return response()->json([
-                'user_id' => $user->profile_id,  // Trả về `profile_id` (hoặc `user_id` tùy theo cài đặt của bạn)
-                'profile_name' => $user->profile_name,  // Trả về tên người dùng
-                'email' => $user->email,  // Trả về email người dùng
-                'phone' => $user->phone,  // Trả về số điện thoại người dùng
-                // Bạn có thể trả thêm các thông tin khác của người dùng nếu cần
-            ], 200);
-        } else {
-            return response()->json([
-                'message' => 'User not authenticated'
-            ], 401); // Nếu không tìm thấy người dùng, trả về lỗi 401
-        }
-    }
+{   
     public function index()
     {
         $profiles = Profiles::all();
@@ -77,15 +58,14 @@ class ProfilesController extends Controller
             ->get();
 
         // Lấy tất cả nhân viên đang làm việc (profile_status = 1)
-        $activeProfiles = Profiles::where('profile_status', "!=", -1)->get();
-
+        $activeProfiles = Profiles::where('profile_status', "!=", 1)->get();
         $officialContractsCount = DB::table('profiles')
-            ->join('labor_contract', 'profiles.labor_contract_id', '=', 'labor_contract.labor_contract_id')
+            ->join('labor_contract', 'profiles.profile_id', '=', 'labor_contract.profile_id')
             ->whereNull('labor_contract.end_time')
             ->count();
 
         $temporaryContractsCount = DB::table('profiles')
-            ->join('labor_contract', 'profiles.labor_contract_id', '=', 'labor_contract.labor_contract_id')
+            ->join('labor_contract', 'profiles.profile_id', '=', 'labor_contract.profile_id')
             ->whereNotNull('labor_contract.end_time')
             ->count();
         return response()->json([
@@ -481,25 +461,15 @@ class ProfilesController extends Controller
             'new_password' => 'required|string|confirmed', // confirmed sẽ kiểm tra trường `new_password_confirmation`
         ]);
 
-        // Lấy người dùng hiện tại theo `profile_id`
-        $user = Profiles::find($request->profile_id);
+    $user = Profiles::find($request->profile_id);
 
-        // Kiểm tra xem hồ sơ có tồn tại và có đang bị khoá không
-        if (!$user) {
-            return response()->json(['message' => 'Profile not found'], 404);
-        } elseif ($user->profile_status == 0) {
-            return response()->json(['message' => 'Profile is inactive'], 403);
-        }
+    if (!$user) {
+        return response()->json(['message' => 'Profile not found'], 404);
+    }
+    // Cập nhật mật khẩu mới
+    $user->password = bcrypt($request->new_password);
+    $user->save();
 
-        // Kiểm tra xem mật khẩu hiện tại có đúng không
-        if (!Hash::check($request->current_password, $user->password)) {
-            return response()->json(['message' => 'Mật khẩu hiện tại không đúng.'], 422);
-        }
-
-        // Cập nhật mật khẩu mới
-        $user->password = bcrypt($request->new_password);
-        $user->save();
-
-        return response()->json(['message' => 'Đổi mật khẩu thành công.'], 200);
+    return response()->json(['message' => 'Đổi mật khẩu thành công.'], 200);
     }
 }
