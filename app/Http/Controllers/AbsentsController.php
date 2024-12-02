@@ -139,18 +139,43 @@ class AbsentsController extends Controller
 
         $from = Carbon::parse($request->from);
         $to = $request->to != null ? Carbon::parse($request->to) : null; // Chỉ xử lý `to` nếu nó tồn tại
+        //Duong
+        $requestedDaysOff = $fields['days_off'] ?? $from->diffInDays($to) + 1; // Tính số ngày nghỉ dựa trên khoảng thời gian
+        // Duong
 
-        // Tổng số ngày nghỉ ĐÃ NGHỈ trong năm
-        $totalLeaveDays = DB::table('absents')
-            ->where('profile_id', $request->profile_id) // Lọc theo user
-            ->whereYear('from', $request->from) // Lọc theo năm
-            ->sum('days_off');
+        // // Tổng số ngày nghỉ ĐÃ NGHỈ trong năm
+        // $totalLeaveDays = DB::table('absents')
+        //     ->where('profile_id', $request->profile_id) // Lọc theo user
+        //     ->whereYear('from', $request->from) // Lọc theo năm
+        //     ->sum('days_off');
 
-        // Lấy Tổng số ngày ĐƯỢC NGHỈ PHÉP của nhân viên trong 1 năm
+    //Duong
+    // Tổng số ngày nghỉ ĐÃ NGHỈ trong năm
+    $totalLeaveDays = DB::table('absents')
+    ->where('profile_id', $fields['profile_id'])
+    ->whereYear('from', $currentYear)
+    ->sum('days_off');
+    //Duong
+    // Lấy Tổng số ngày ĐƯỢC NGHỈ PHÉP của nhân viên trong 1 năm
         $daysOffAvailablePerYear = DB::table('profiles')
             ->where('profile_id', $request->profile_id)
             ->value('days_off'); // Dùng value lấy giá trị trực tiếp của cột
-
+         // Kiểm tra xem tổng số ngày nghỉ sau khi thêm yêu cầu mới có vượt quá giới hạn không
+    //Duong
+    if ($totalLeaveDays + $requestedDaysOff > $daysOffAvailablePerYear) {
+        return response()->json(['message' => 'Số ngày nghỉ phép vượt quá giới hạn. Bạn chỉ còn ' . ($daysOffAvailablePerYear - $totalLeaveDays) . ' ngày nghỉ phép'], 400);
+    }
+    //Duong
+      // Kiểm tra xem đã có yêu cầu nghỉ phép nào trong tháng này chưa
+      $existingLeaveInMonth = Absents::where('profile_id', $fields['profile_id'])
+      ->whereMonth('from', $from->month) // Kiểm tra tháng của ngày nghỉ
+      ->whereYear('from', $from->year) // Kiểm tra năm của ngày nghỉ
+      ->exists(); // Kiểm tra nếu có đơn nghỉ phép nào trong tháng
+  //Duong
+  if ($existingLeaveInMonth) {
+      return response()->json(['message' => 'Bạn đã tạo đơn nghỉ phép trong tháng này rồi'], 400);
+  }
+  //Duong
         //Kiểm tra trùng đã nghỉ
         $existingLeave = Absents::where('profile_id', $request->profile_id)
             ->where(function ($query) use ($from, $to) {
@@ -214,6 +239,7 @@ class AbsentsController extends Controller
             "profile_id" => "required|string",
             "days_off" => "nullable|integer",
             "status" => "required|integer",
+            "ID" => "required|integer", 
         ]);
 
         $from = Carbon::parse($request->from);
@@ -255,10 +281,6 @@ class AbsentsController extends Controller
                 }
             })->exists();
 
-
-        if ($existingLeave) {
-            return response()->json(['message' => 'Bạn đã xin nghỉ trong khoảng thời gian này rồi'], 401);
-        }
         // Kiểm tra nếu số ngày nghỉ phép yêu cầu vượt quá giới hạn
         $requestedDaysOff = $input['days_off'];
         if ($totalLeaveDays + $requestedDaysOff > $daysOffAvailablePerYear) // nếu số ngày ĐÃ NGHỈ == số ngày ĐƯỢC NGHỈ PHÉP trong 1 năm

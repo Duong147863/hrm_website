@@ -43,6 +43,7 @@ Route::middleware(['auth:sanctum'])->group(function () {
         Route::post('/v1/profile/auth/register', 'registerNewProfile');
         Route::put('v1/profile/update', 'updateInfo');
         Route::post('/v1/profile/changePassword', 'changePassword'); // API đổi mật khẩu
+        Route::post('/v1/profile/resetPassword', 'resetPassword'); // API đổi mật khẩu
         Route::put('/v1/profile/delete', 'deactivateProfile');
     });
     Route::controller(PositionsController::class)->group(function () {
