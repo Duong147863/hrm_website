@@ -101,6 +101,7 @@ Route::middleware(['auth:sanctum'])->group(function () {
         Route::get('/v1/late-employees', 'getLateList');
         Route::post('/v1/checkin', 'checkIn');
         Route::put('/v1/update/{id}', 'checkOut');
+        Route::put('/v1/overtime', 'getOTList');
     });
     //
     Route::controller(RolesController::class)->group(function () {

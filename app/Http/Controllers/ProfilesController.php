@@ -461,70 +461,15 @@ class ProfilesController extends Controller
             'new_password' => 'required|string|confirmed', // confirmed sẽ kiểm tra trường `new_password_confirmation`
         ]);
 
-        // Lấy người dùng hiện tại theo `profile_id`
-        $user = Profiles::find($request->profile_id);
+    $user = Profiles::find($request->profile_id);
 
-        // Kiểm tra xem hồ sơ có tồn tại và có đang bị khoá không
-        if (!$user) {
-            return response()->json(['message' => 'Profile not found'], 404);
-        } elseif ($user->profile_status != -1) {
-            return response()->json(['message' => 'Profile is inactive'], 403);
-        }
-        // Cập nhật mật khẩu mới
-        $user->password = bcrypt($request->new_password);
-        $user->save();
-
-        return response()->json(['message' => 'Đổi mật khẩu thành công.'], 200);
+    if (!$user) {
+        return response()->json(['message' => 'Profile not found'], 404);
     }
+    // Cập nhật mật khẩu mới
+    $user->password = bcrypt($request->new_password);
+    $user->save();
 
-    //     public function forgotPassword(Request $request)
-    //     {
-    //         $request->validate([
-    //             'email' => 'required|email|exists:profiles,email',
-    //         ]);
-
-    //         $email = $request->email;
-
-    //         // Tạo token và lưu cache
-    //         $token = Str::random(64);
-    //         Cache::put("password_reset_$email", $token, 3600); // Lưu token 1 giờ
-
-    //         // Gửi email với token
-    //         $url = url("/reset-password?token=$token&email=$email");
-    //         Mail::raw("Reset your password using the following link: $url", function ($message) use ($email) {
-    //             $message->to($email)
-    //                 ->subject('Reset Password');
-    //         });
-
-    //         return response()->json(['message' => 'Password reset link sent']);
-    //     }
-
-    //     public function resetPassword(Request $request)
-    // {
-    //     $request->validate([
-    //         'email' => 'required|email|exists:profiles,email',
-    //         'token' => 'required',
-    //         'password' => 'required|confirmed',
-    //     ]);
-
-    //     $email = $request->email;
-    //     $token = $request->token;
-
-    //     // Lấy token từ cache
-    //     $cachedToken = Cache::get("password_reset_$email");
-
-    //     if (!$cachedToken || $cachedToken !== $token) {
-    //         return response()->json(['message' => 'Invalid or expired token'], 401);
-    //     }
-
-    //     // Đặt lại mật khẩu
-    //     $profile = Profiles::where('email', $email)->first();
-    //     $profile->password = Hash::make($request->password);
-    //     $profile->save();
-
-    //     // Xóa token khỏi cache
-    //     Cache::forget("password_reset_$email");
-
-    //     return response()->json(['message' => 'Password reset successfully']);
-    // }
+    return response()->json(['message' => 'Đổi mật khẩu thành công.'], 200);
+    }
 }
