@@ -79,14 +79,9 @@ class RelativesController extends Controller
     public function update(Request $request)
     {
         $relatives = Relatives::find($request->relative_id);
-        // Kiểm tra xem relative có tồn tại không
-        if (!$relatives) {
-            return response()->json([
-                'message' => 'Relative not found'
-            ], 404);  // Trả về lỗi 404 nếu không tìm thấy relative
-        }
+
         $input = $request->validate([
-            "relative_id" => "required|integer",
+            "relative_id" => "nullable|integer",
             "relative_name" => "required|string",
             "relative_phone" => "required|string",
             "relative_birthday" => "required|date",

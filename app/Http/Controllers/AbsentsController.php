@@ -65,8 +65,16 @@ class AbsentsController extends Controller
             // Trả về kết quả dưới dạng JSON
             return response()->json($absents);
         }
+            // Kiểm tra nếu role_id của người đăng nhập là 1
+        if ($userProfile && $userProfile->role_id == 1) {
+            // Lấy tất cả đơn nghỉ của chính người đăng nhập
+            $absents = DB::table('absents')
+                ->where('absents.profile_id', '=', $profileId) // Chỉ lấy đơn nghỉ của người đăng nhập
+                ->get();
 
-
+            // Trả về kết quả dưới dạng JSON
+            return response()->json($absents);
+        }
         // Nếu người dùng không có role_id là 4 hoặc 5, trả về thông báo lỗi
         return response()->json(['message' => 'Access denied or invalid role'], 403);
     }

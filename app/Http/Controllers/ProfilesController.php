@@ -371,8 +371,8 @@ class ProfilesController extends Controller
             "place_of_birth" => "string",
             "role_id" => "integer",
             "profile_image" => "nullable|string",
-            "start_time" => "date",
-            "end_time" => "date",
+            "start_time" => "nullable|date",
+            "end_time" => "nullable|date",
             // "days_off" => "integer",
             //foriegn key
             "department_id" => "nullable|string",
