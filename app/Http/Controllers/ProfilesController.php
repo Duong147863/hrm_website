@@ -58,7 +58,7 @@ class ProfilesController extends Controller
             ->get();
 
         // Lấy tất cả nhân viên đang làm việc (profile_status = 1)
-        $activeProfiles = Profiles::where('profile_status', "!=", 1)->get();
+        $activeProfiles = Profiles::where('profile_status', "!=", -1)->get();
         $officialContractsCount = DB::table('profiles')
             ->join('labor_contract', 'profiles.profile_id', '=', 'labor_contract.profile_id')
             ->whereNull('labor_contract.end_time')
