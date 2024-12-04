@@ -19,7 +19,8 @@ class Timekeepings extends Model
         "leaving_soon",
         "status",
         "shift_id",
-        "profile_id"
+        "profile_id",
+        "note",
     ];
     public $timestamps = false;
     protected $casts = [
@@ -30,7 +31,7 @@ class Timekeepings extends Model
         'shift_id' => "string",
         'leaving_soon' => "datetime",
         'date' => "date",
+        'note' => "string",
         'status' => 'integer'
     ];
-
 }
