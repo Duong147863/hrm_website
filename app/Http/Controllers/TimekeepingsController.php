@@ -182,21 +182,57 @@ class TimekeepingsController extends Controller
     }
     public function update(Request $request)
     {
-        $checkOut = Timekeepings::find($request->timekeeping_id);
-
+        $timekeepings = Timekeepings::find($request->timekeeping_id);
+          // Kiểm tra xem relative có tồn tại không
+        if (!$timekeepings) {
+            return response()->json([
+                'message' => 'Trainingprocesses not found'
+            ], 404);  // Trả về lỗi 404 nếu không tìm thấy relative
+        }
         $input = $request->validate([
-            'checkout' => "required|time",
-            'leaving_soon' => "nullable|time",
-            'status' => 'required|integer'
-        ]);
-        $checkOut->timekeeping_id = $input['timekeeping_id'];
-        $checkOut->profile_id = $input['profile_id'];
-        $checkOut->shift_id = $input['shift_id'];
-        $checkOut->checkout = $input['checkout'];
-        $checkOut->shift_id = $input['shift_id'];
-        $checkOut->date = $input['date'];
-        $checkOut->status = $input['status'];
-        $checkOut->save();
-        return response()->json([], 200);
+            'date' => "date",
+            'leaving_soon' => "required|date_format:H:i:s",
+            'shift_id' => "string",
+            'checkout' => "datetime|required",
+            'checkin' => "required|date_format:H:i:s",
+            'late' => "nullable|date_format:H:i:s",
+            'profile_id' => "required|string",
+            'status' => 0,
+            'timekeeping_id' => 'required|integer'
+        ]);        
+        $timekeepings->date = $input['date'];
+        $timekeepings->leaving_soon = $input['leaving_soon'];
+        $timekeepings->shift_id = $input['shift_id'];
+        $timekeepings->checkout = $input['checkout'];
+        $timekeepings->checkin = $input['checkin'];
+        $timekeepings->late = $input['late'];
+        $timekeepings->profile_id = $input['profile_id'];
+        $timekeepings->status = $input['status'];
+        $timekeepings->timekeeping_id = $input['timekeeping_id'];
+        $timekeepings->save();
+        $arr = [
+            "status" => true,
+            "message" => "Save successful",
+        ];
+        return response()->json($arr, 200);
+    }
+    public function delete($id)
+    {
+        $timekeepings = Timekeepings::find($id);
+
+        if (!$timekeepings) {
+            return response()->json([
+                "status" => false,
+                "message" => "timekeepings not found",
+                "data" => []
+            ], 404);
+        }
+
+        $timekeepings->delete();
+        return response()->json([
+            "status" => true,
+            "message" => "Delete success",
+            "data" => []
+        ], 200);
     }
 }
