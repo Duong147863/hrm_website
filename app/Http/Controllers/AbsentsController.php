@@ -3,15 +3,11 @@
 namespace App\Http\Controllers;
 
 use App\Models\Absents;
-use App\Http\Resources\AbsentsResource as AbsentsResource;
-use App\Models\Timekeepings;
 use Illuminate\Routing\Controller;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 use Carbon\Carbon;
-use Carbon\CarbonPeriod;
-use App\Models\Profiles;
-use App\Http\Controllers\ProfilesController;
+
 
 class AbsentsController extends Controller
 {
@@ -52,7 +48,7 @@ class AbsentsController extends Controller
         if ($userProfile && $userProfile->role_id == 3) {
             // Lấy department_id của người dùng hiện tại
             $userDepartmentId = $userProfile->department_id;
-        
+
             // Lấy tất cả đơn nghỉ của nhân viên thuộc cùng phòng ban, ngoại trừ người dùng hiện tại
             $absents = DB::table('absents')
                 ->join('profiles', 'absents.profile_id', '=', 'profiles.profile_id')
@@ -61,7 +57,7 @@ class AbsentsController extends Controller
                 ->where('profiles.profile_id', '<>', $profileId) // Loại trừ đơn nghỉ của người dùng hiện tại
                 ->select('absents.*', 'profiles.profile_id', 'profiles.profile_name', 'departments.department_name') // Chọn các cột cần thiết
                 ->get();
-        
+
             // Trả về kết quả dưới dạng JSON
             return response()->json($absents);
         }
@@ -256,7 +252,7 @@ class AbsentsController extends Controller
             "profile_id" => "required|string",
             "days_off" => "nullable|integer",
             "status" => "required|integer",
-            "ID" => "required|integer", 
+            "ID" => "required|integer",
         ]);
 
         $from = Carbon::parse($request->from);

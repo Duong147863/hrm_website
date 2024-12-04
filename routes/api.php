@@ -40,6 +40,7 @@ Route::middleware(['auth:sanctum'])->group(function () {
         Route::get('/v1/profiles/quit', 'quitMembersCount');
         Route::get('/v1/profiles/count', 'MembersCount'); //Danh sách nhân viên đã nghỉ việc và số lượng
         Route::get('/v1/profiles', 'index');
+        Route::get('/v1/profile/info/{id}', 'show');
         Route::post('/v1/profile/auth/register', 'registerNewProfile');
         Route::put('v1/profile/update', 'updateInfo');
         Route::post('/v1/profile/changePassword', 'changePassword'); // API đổi mật khẩu
