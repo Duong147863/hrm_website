@@ -30,7 +30,7 @@ class AbsentsController extends Controller
             // Lấy tất cả đơn nghỉ của những nhân viên có role_id = 1 (không bao gồm đơn nghỉ của profileId)
             $absents = DB::table('absents')
                 ->join('profiles', 'absents.profile_id', '=', 'profiles.profile_id')
-                ->where('profiles.role_id', 1) // Lọc nhân viên có role_id = 1
+                ->where('profiles.role_id',"<",4) // Lọc nhân viên có role_id = <4
                 ->where('absents.profile_id', '<>', $profileId) // Loại trừ đơn nghỉ của chính người đăng nhập
                 ->select('absents.*') // Chỉ lấy các cột từ bảng absents
                 ->get();
@@ -43,12 +43,29 @@ class AbsentsController extends Controller
         if ($userProfile && $userProfile->role_id == 5) {
             // Lấy tất cả đơn nghỉ của mọi nhân viên, trừ đơn nghỉ của chính người đăng nhập
             $absents = DB::table('absents')
-                ->where('profile_id', '<>', $profileId) // Loại trừ đơn nghỉ của chính người đăng nhập
+                ->where('absents.profile_id', '<>', $profileId) // Loại trừ đơn nghỉ của chính người đăng nhập
                 ->get();
 
             // Trả về kết quả dưới dạng JSON
             return response()->json($absents);
         }
+        if ($userProfile && $userProfile->role_id == 3) {
+            // Lấy department_id của người dùng hiện tại
+            $userDepartmentId = $userProfile->department_id;
+        
+            // Lấy tất cả đơn nghỉ của nhân viên thuộc cùng phòng ban, ngoại trừ người dùng hiện tại
+            $absents = DB::table('absents')
+                ->join('profiles', 'absents.profile_id', '=', 'profiles.profile_id')
+                ->join('departments', 'departments.department_id', '=', 'profiles.department_id')
+                ->where('profiles.department_id', $userDepartmentId) // Chỉ lấy nhân viên cùng phòng ban
+                ->where('profiles.profile_id', '<>', $profileId) // Loại trừ đơn nghỉ của người dùng hiện tại
+                ->select('absents.*', 'profiles.profile_id', 'profiles.profile_name', 'departments.department_name') // Chọn các cột cần thiết
+                ->get();
+        
+            // Trả về kết quả dưới dạng JSON
+            return response()->json($absents);
+        }
+
 
         // Nếu người dùng không có role_id là 4 hoặc 5, trả về thông báo lỗi
         return response()->json(['message' => 'Access denied or invalid role'], 403);
