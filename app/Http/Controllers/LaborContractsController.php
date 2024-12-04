@@ -67,56 +67,65 @@ class LaborContractsController extends Controller
     }
     
     public function createNewLaborContract(Request $request)
-    {
-        $existLaborContract = LaborContracts::where('profile_id',$request->profile_id)->get();
+{
+    $existLaborContract = LaborContracts::where('profile_id', $request->profile_id)->get();
 
-        $fields = $request->validate([
-            "labor_contract_id" => "required|string",
-            "end_time" => "nullable|date",
-            "start_time" => "required|date",
-            "image" => "required|string",
-            "profile_id" => "required|string",
-        ]);
-        $laborcontractIdExists = Laborcontracts::where('labor_contract_id', $fields['labor_contract_id'])->exists();
-        if ($laborcontractIdExists) {
-            return response()->json([
-                "status" => false,
-                "message" => "Mã HD này đã tồn tại trong danh sách nhân viên."
-            ], 422);
-        }
-        $newLaborContract = LaborContracts::create([
-            'labor_contract_id' => ($fields['labor_contract_id']),
-            'start_time' => ($fields['start_time']),
-            'image' => ($fields['image']),
-            'end_time' => ($fields['end_time']),
-            'profile_id' => ($fields['profile_id']),
-        ]);
-            // Lấy profile để kiểm tra trạng thái hiện tại
-        $profile = Profiles::find($fields['profile_id']);
-        if ($profile) {
-            // Kiểm tra và cập nhật profileStatus dựa vào trạng thái hiện tại
-            switch ($profile->profile_status) {
-                case 0: // Đang thử việc
-                    $profile->profile_status = 1; // Ký hợp đồng lần 1
-                    break;
-                case 1: // Ký hợp đồng lần 1
-                    $profile->profile_status = 2; // Ký hợp đồng lần 2
-                    break;
-                case 2: // Ký hợp đồng lần 2
-                    $profile->profile_status = 3; // Ký hợp đồng lần 3
-                    break;
-                default:
-                    // Không làm gì nếu đã vượt quá trạng thái ký hợp đồng lần 3
-                    break;
-            }
-            // Lưu lại trạng thái cập nhật
-            $profile->save();
-        }
+    $fields = $request->validate([
+        "labor_contract_id" => "required|string",
+        "end_time" => "nullable|date",
+        "start_time" => "required|date",
+        "image" => "required|string",
+        "profile_id" => "required|string",
+    ]);
+
+    $laborcontractIdExists = LaborContracts::where('labor_contract_id', $fields['labor_contract_id'])->exists();
+    if ($laborcontractIdExists) {
         return response()->json([
-                "status" => true,
-                "message" => "Hợp đồng mới đã được tạo và trạng thái profile đã được cập nhật."
-        ], 201);
+            "status" => false,
+            "message" => "Mã HD này đã tồn tại trong danh sách nhân viên."
+        ], 422);
     }
+
+    $newLaborContract = LaborContracts::create([
+        'labor_contract_id' => $fields['labor_contract_id'],
+        'start_time' => $fields['start_time'],
+        'image' => $fields['image'],
+        'end_time' => $fields['end_time'],
+        'profile_id' => $fields['profile_id'],
+    ]);
+
+    // Lấy profile để kiểm tra và cập nhật trạng thái
+    $profile = Profiles::find($fields['profile_id']);
+    if ($profile) {
+        // Cập nhật trạng thái hợp đồng
+        switch ($profile->profile_status) {
+            case 0: // Đang thử việc
+                $profile->profile_status = 1; // Ký hợp đồng lần 1
+                break;
+            case 1: // Ký hợp đồng lần 1
+                $profile->profile_status = 2; // Ký hợp đồng lần 2
+                break;
+            case 2: // Ký hợp đồng lần 2
+                $profile->profile_status = 3; // Ký hợp đồng lần 3
+                break;
+            default:
+                // Không làm gì nếu đã vượt quá trạng thái ký hợp đồng lần 3
+                break;
+        }
+                                                                                                                        
+        // Gán giá trị cho dateoff (kiểu int, cộng thêm 12)
+        $profile->days_off += 12;
+        $profile->end_time = null;
+        // Lưu lại trạng thái và ngày nghỉ
+        $profile->save();
+    }
+
+    return response()->json([
+        "status" => true,
+        "message" => "Hợp đồng mới đã được tạo và trạng thái profile đã được cập nhật."
+    ], 201);
+}
+
     public function update(Request $request)
     {
         $laborContracts = LaborContracts::find($request->labor_contract_id);

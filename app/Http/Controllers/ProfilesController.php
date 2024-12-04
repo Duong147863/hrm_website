@@ -51,30 +51,73 @@ class ProfilesController extends Controller
             'totals' => $profiles->count(),
         ]);
     }
-    public function MembersCount() // SL nhân viên đã nghỉ việc và đang làm việc
-    {
-        // Lấy tất cả nhân viên đã nghỉ việc (profile_status = -1)
-        $quitProfiles = Profiles::where('profile_status', -1)
-            ->get();
+    // public function MembersCount() // SL nhân viên đã nghỉ việc và đang làm việc
+    // {
+    //     // Lấy tất cả nhân viên đã nghỉ việc (profile_status = -1)
+    //     $quitProfiles = Profiles::where('profile_status', -1)
+    //         ->get();
 
-        // Lấy tất cả nhân viên đang làm việc (profile_status = 1)
-        $activeProfiles = Profiles::where('profile_status', "!=", -1)->get();
-        $officialContractsCount = DB::table('profiles')
-            ->join('labor_contract', 'profiles.profile_id', '=', 'labor_contract.profile_id')
-            ->whereNull('labor_contract.end_time')
-            ->count();
+    //     // Lấy tất cả nhân viên đang làm việc (profile_status = 1)
+    //     $activeProfiles = Profiles::where('profile_status', "!=", -1)->get();
 
-        $temporaryContractsCount = DB::table('profiles')
-            ->join('labor_contract', 'profiles.profile_id', '=', 'labor_contract.profile_id')
-            ->whereNotNull('labor_contract.end_time')
-            ->count();
-        return response()->json([
-            'quitCount' => $quitProfiles->count(), // Số lượng nhân viên đã nghỉ việc
-            'activeCount' => $activeProfiles->count(), // Số lượng nhân viên đang làm việc
-            'officialContractsCount' => $officialContractsCount, // Số lượng hợp đồng chính thức (end_time null)
-            'temporaryContractsCount' => $temporaryContractsCount, // Số lượng hợp đồng có thời hạn (end_time không null)
-        ]);
-    }
+    //     //Lấy tất cả nhân viên đang thử việc
+    //     $probationaryEmployee = DB::table('profiles')
+    //     ->whereNotNull('profiles.end_time')
+    //     ->count();
+    //     //
+    //     $officialContractsCount = DB::table('profiles')
+    //         ->join('labor_contract', 'profiles.profile_id', '=', 'labor_contract.profile_id')
+    //         ->whereNull('labor_contract.end_time')
+    //         ->count();
+
+    //     $temporaryContractsCount = DB::table('profiles')
+    //         ->join('labor_contract', 'profiles.profile_id', '=', 'labor_contract.profile_id')
+    //         ->whereNotNull('labor_contract.end_time')
+    //         ->count();
+    //     return response()->json([
+    //         'quitCount' => $quitProfiles->count(), // Số lượng nhân viên đã nghỉ việc
+    //         'activeCount' => $activeProfiles->count(), // Số lượng nhân viên đang làm việc
+    //         'officialContractsCount' => $officialContractsCount, // Số lượng hợp đồng chính thức (end_time null)
+    //         'temporaryContractsCount' => $temporaryContractsCount, // Số lượng hợp đồng có thời hạn (end_time không null)
+    //         'probationaryEmployee' => $probationaryEmployee, // Số lượng nhân viên thử việc (end_time không null)
+    //     ]);
+    // }
+    public function MembersCount() // Số lượng nhân viên đã nghỉ việc, đang làm việc, và thử việc
+{
+    // Lấy số lượng nhân viên đã nghỉ việc (profile_status = -1)
+    $quitProfilesCount = Profiles::where('profile_status', -1)->count();
+
+    // Lấy số lượng nhân viên đang làm việc (profile_status != -1)
+    $activeProfilesCount = Profiles::where('profile_status', "!=", -1)->count();
+
+    // Lấy số lượng nhân viên có hợp đồng chính thức (end_time IS NULL)
+    $officialContractsCount = DB::table('profiles')
+        ->join('labor_contract', 'profiles.profile_id', '=', 'labor_contract.profile_id')
+        ->whereNull('labor_contract.end_time')
+        ->distinct('profiles.profile_id') // Chỉ tính một lần cho mỗi profile_id
+        ->count();
+
+      // Lấy số lượng nhân viên có hợp đồng thử việc (end_time IS NOT NULL và hợp đồng chưa hết hạn)
+      $temporaryContractsCount = DB::table('labor_contract')
+      ->whereNotNull('end_time') // Chỉ lấy hợp đồng có thời hạn
+      ->where('end_time', '>=', now()) // Chỉ lấy hợp đồng chưa hết hạn
+      ->distinct('profile_id') // Chỉ tính mỗi profile 1 lần
+      ->count();
+
+    
+    // Lấy số lượng nhân viên thử việc (không liên quan đến hợp đồng)
+    $probationaryEmployeeCount = Profiles::whereNotNull('end_time')->count();
+
+    // Trả về kết quả
+    return response()->json([
+        'quitCount' => $quitProfilesCount, // Số lượng nhân viên đã nghỉ việc
+        'activeCount' => $activeProfilesCount, // Số lượng nhân viên đang làm việc
+        'officialContractsCount' => $officialContractsCount, // Số lượng hợp đồng chính thức
+        'temporaryContractsCount' => $temporaryContractsCount, // Số lượng hợp đồng có thời hạn
+        'probationaryEmployee' => $probationaryEmployeeCount, // Số lượng nhân viên thử việc
+    ]);
+}
+
     public function MembersCountGenderAndMaritalStatus() // SL nhân viên đã nghỉ việc và đang làm việc
     {
         //Lấy count nam
