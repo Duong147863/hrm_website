@@ -14,6 +14,7 @@ class Timekeepings extends Model
     protected $fillable = [
         "checkin",
         "checkout",
+        "timekeeping_id",
         "date",
         "late",
         "leaving_soon",
@@ -30,7 +31,8 @@ class Timekeepings extends Model
         'shift_id' => "string",
         'leaving_soon' => "datetime",
         'date' => "date",
-        'status' => 'integer'
+        'status' => 'integer',
+        'timekeeping_id' => 'integer'
     ];
 
 }
