@@ -48,11 +48,7 @@ if ($duplicate) {
     // Tìm bản ghi dựa trên ID
     $workingProcesses = WorkingProcesses::find($request->workingprocess_id);
     // Kiểm tra xem relative có tồn tại không
-    if (!$workingProcesses) {
-        return response()->json([
-            'message' => 'WorkingProcesses not found'
-        ], 404);  // Trả về lỗi 404 nếu không tìm thấy relative
-    }
+
     // Validate dữ liệu đầu vào
     $input = $request->validate([
         'profile_id' => "string|required",
@@ -62,19 +58,7 @@ if ($duplicate) {
         'end_time' => "nullable|date",
         'workplace_name' => "string|required",
     ]);
-       // Kiểm tra workplace_name và workingprocess_content không trùng trong cùng profile_id
-       $duplicate = WorkingProcesses::where('profile_id', $input['profile_id'])
-       ->where('workplace_name', $input['workplace_name'])
-       ->where('workingprocess_content', $input['workingprocess_content'])
-       ->where('workingprocess_id', '!=', $workingProcesses->workingprocess_id)
-       ->first();
-   
-   if ($duplicate) {
-       return response()->json([
-           "status" => false,
-           "message" => "Tên quá trình công tác và nội dung quá trình làm việc không được trùng lặp"
-       ], 422);
-   }
+ 
     // Cập nhật các trường trong bản ghi
     $workingProcesses->workingprocess_id = $input['workingprocess_id'];
     $workingProcesses->workplace_name = $input['workplace_name'];

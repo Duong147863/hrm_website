@@ -21,6 +21,7 @@ class TimekeepingsController extends Controller
             $checkin
         );
     }
+    
     // Thống kê số giờ làm việc theo tháng
     public function monthlyStatistics()
     {
