@@ -48,12 +48,6 @@ class TrainingProcessesController extends Controller
     public function update(Request $request)
     {
         $trainingprocesses = TrainingProcesses::find($request->trainingprocesses_id);
-          // Kiểm tra xem relative có tồn tại không
-        if (!$trainingprocesses) {
-            return response()->json([
-                'message' => 'Trainingprocesses not found'
-            ], 404);  // Trả về lỗi 404 nếu không tìm thấy relative
-        }
         $input = $request->validate([
             'profile_id' => "required|string",
             'trainingprocesses_id' => "required|integer",
